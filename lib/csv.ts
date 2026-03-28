@@ -12,7 +12,10 @@ interface CsvRow {
   "Created At"?: string;
 }
 
-function normalizeContactMethod(value: string | undefined, contactLink: string): ContactMethod {
+function normalizeContactMethod(
+  value: string | undefined,
+  contactLink: string,
+): ContactMethod {
   const lowerValue = value?.trim().toLowerCase();
 
   if (lowerValue === "reddit" || contactLink.includes("reddit.com")) {
@@ -26,10 +29,15 @@ function normalizeContactMethod(value: string | undefined, contactLink: string):
   return "discord";
 }
 
-export async function fetchAndParseCsv(csvUrl: string): Promise<PlayerRecord[]> {
+export async function fetchAndParseCsv(
+  csvUrl: string,
+): Promise<PlayerRecord[]> {
+  console.log(999, csvUrl);
+
   const response = await fetch(csvUrl, {
     cache: "no-store",
   });
+  console.log(998, response);
 
   if (!response.ok) {
     throw new Error(`CSV fetch failed with status ${response.status}`);

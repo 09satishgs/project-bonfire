@@ -38,14 +38,20 @@ export function PlayerCard({ player, adminEmail }: PlayerCardProps) {
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div>
-          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Friend Code</div>
-          <div className="mt-1 font-mono text-base">{player.friendCode || "Not listed"}</div>
+          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+            Friend Code
+          </div>
+          <div className="mt-1 font-mono text-base">
+            {player.friendCode || "Not listed"}
+          </div>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Contact</div>
+          <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+            Contact
+          </div>
           {contactHref ? (
             <a
-              className="mt-1 block font-medium text-primary underline-offset-4 hover:underline"
+              className="mt-1 block font-medium text-primary underline-offset-4 hover:underline max-w-full overflow-x-hidden"
               href={contactHref}
               rel="noreferrer"
               target={player.contactMethod === "email" ? undefined : "_blank"}
