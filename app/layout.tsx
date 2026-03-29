@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 
+import { AppChrome } from "@/components/app-chrome";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body>
         <ServiceWorkerRegister />
-        {children}
+        <AppChrome csvUrl={process.env.NEXT_PUBLIC_SHEET_CSV_URL}>{children}</AppChrome>
       </body>
     </html>
   );

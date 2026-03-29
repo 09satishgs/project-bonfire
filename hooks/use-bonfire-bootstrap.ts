@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { CACHE_TTL_MS } from "@/lib/constants";
 import {
@@ -18,16 +18,17 @@ import { normalizeIgn } from "@/lib/utils";
 import { useBonfireStore } from "@/stores/bonfire-store";
 
 export function useBonfireBootstrap(csvUrl: string | undefined) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const setRecords = useBonfireStore((state) => state.setRecords);
   const setWatchlistIgns = useBonfireStore((state) => state.setWatchlistIgns);
   const setStoreWatchlistMatches = useBonfireStore((state) => state.setWatchlistMatches);
+  const setBootstrapStatus = useBonfireStore((state) => state.setBootstrapStatus);
 
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
+      let nextError: string | null = null;
+
       try {
         const [cachedRecords, cachedFetchedAt, watchlistIgns, persistedMatches] = await Promise.all([
           getCachedRecords(),
@@ -45,7 +46,7 @@ export function useBonfireBootstrap(csvUrl: string | undefined) {
 
         if (cachedRecords && cachedFetchedAt && Date.now() - cachedFetchedAt < CACHE_TTL_MS) {
           setRecords(cachedRecords, cachedFetchedAt);
-          setIsLoading(false);
+          setBootstrapStatus(false, null);
           return;
         }
 
@@ -54,8 +55,8 @@ export function useBonfireBootstrap(csvUrl: string | undefined) {
             setRecords(cachedRecords, cachedFetchedAt);
           }
 
-          setError("Set NEXT_PUBLIC_SHEET_CSV_URL to enable live sync.");
-          setIsLoading(false);
+          nextError = "Set NEXT_PUBLIC_SHEET_CSV_URL to enable live sync.";
+          setBootstrapStatus(false, nextError);
           return;
         }
 
@@ -78,35 +79,36 @@ export function useBonfireBootstrap(csvUrl: string | undefined) {
         if (!cancelled) {
           setRecords(freshRecords, fetchedAt);
           setStoreWatchlistMatches(newMatches.map((match) => match.ign));
+          setBootstrapStatus(false, null);
         }
       } catch (caughtError) {
         const message =
           caughtError instanceof Error ? caughtError.message : "Unable to load the player directory.";
         const cachedRecords = await getCachedRecords();
         const cachedFetchedAt = await getLastFetchedAt();
+        nextError = message;
 
         if (!cancelled) {
           if (cachedRecords) {
             setRecords(cachedRecords, cachedFetchedAt);
           }
 
-          setError(message);
+          setBootstrapStatus(false, nextError);
         }
       } finally {
         if (!cancelled) {
-          setIsLoading(false);
+          setBootstrapStatus(false, nextError);
         }
       }
     }
 
+    setBootstrapStatus(true, null);
     void bootstrap();
 
     return () => {
       cancelled = true;
     };
-  }, [csvUrl, setRecords, setStoreWatchlistMatches, setWatchlistIgns]);
-
-  return { isLoading, error };
+  }, [csvUrl, setBootstrapStatus, setRecords, setStoreWatchlistMatches, setWatchlistIgns]);
 }
 
 export async function watchIgn(ign: string): Promise<void> {

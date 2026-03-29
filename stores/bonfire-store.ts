@@ -12,13 +12,17 @@ interface BonfireState {
   watchlistIgns: string[];
   watchlistMatches: string[];
   lastFetchedAt: number | null;
+  bootstrapLoading: boolean;
+  bootstrapError: string | null;
   filters: BonfireFilters;
   setRecords: (records: PlayerRecord[], lastFetchedAt: number | null) => void;
   setFilters: (partial: Partial<BonfireFilters>) => void;
   setWatchlistIgns: (igns: string[]) => void;
   addWatchlistIgn: (ign: string) => void;
+  removeWatchlistIgn: (ign: string) => void;
   setWatchlistMatches: (igns: string[]) => void;
   dismissWatchlistMatch: (ign: string) => void;
+  setBootstrapStatus: (loading: boolean, error: string | null) => void;
 }
 
 function applyFilters(records: PlayerRecord[], filters: BonfireFilters): PlayerRecord[] {
@@ -55,6 +59,8 @@ export const useBonfireStore = create<BonfireState>((set, get) => ({
   watchlistIgns: [],
   watchlistMatches: [],
   lastFetchedAt: null,
+  bootstrapLoading: true,
+  bootstrapError: null,
   filters: defaultFilters,
   setRecords: (records, lastFetchedAt) => {
     const filters = get().filters;
@@ -79,9 +85,14 @@ export const useBonfireStore = create<BonfireState>((set, get) => ({
     set((state) => ({
       watchlistIgns: state.watchlistIgns.includes(ign) ? state.watchlistIgns : [...state.watchlistIgns, ign],
     })),
+  removeWatchlistIgn: (ign) =>
+    set((state) => ({
+      watchlistIgns: state.watchlistIgns.filter((entry) => entry !== ign),
+    })),
   setWatchlistMatches: (igns) => set({ watchlistMatches: igns }),
   dismissWatchlistMatch: (ign) =>
     set((state) => ({
       watchlistMatches: state.watchlistMatches.filter((entry) => entry !== ign),
     })),
+  setBootstrapStatus: (loading, error) => set({ bootstrapLoading: loading, bootstrapError: error }),
 }));
