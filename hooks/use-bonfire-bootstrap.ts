@@ -19,7 +19,7 @@ import {
   setWatchlistMatches,
 } from "@/lib/idb";
 import { defaultRegistrationMetadata } from "@/lib/registration-metadata";
-import { fetchAndParseCsv } from "@/lib/csv";
+import { fetchDirectoryData } from "@/lib/csv";
 import { fetchRegistrationMetadata, getRegistrationMetadataUrl } from "@/lib/registration-metadata";
 import { normalizeIgn } from "@/lib/utils";
 import { useBonfireStore } from "@/stores/bonfire-store";
@@ -99,7 +99,7 @@ export function useBonfireBootstrap(csvUrl: string | undefined) {
           return;
         }
 
-        const freshRecords = await fetchAndParseCsv(
+        const freshRecords = await fetchDirectoryData(
           csvUrl,
           registrationMetadata.contactPlatforms,
         );
