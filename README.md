@@ -22,6 +22,8 @@ To achieve this, PoGo-Bonfire decouples the read and write paths:
 - **Device-Locked Registration:** Bypasses the need for heavy OAuth by storing a local registration state, automatically locking the device to the registered IGN to prevent duplicate submissions while keeping the UI clean.
 - **Portal-to-Mailto Moderation:** A custom modal flow that generates pre-formatted, structured emails to the admin team for typo corrections or bad-actor reporting, natively handling the limitations of browser attachment capabilities.
 
+<img width="2098" height="2907" alt="Image" src="https://github.com/user-attachments/assets/56b3d309-7a64-42b0-be19-9fd3073c4b5a" />
+
 ---
 
 ## Technology Stack
