@@ -9,8 +9,6 @@ import type {
 } from "@/lib/types";
 
 const GOOGLE_FETCH_TIMEOUT_MS = 2000;
-const GVIZ_PREFIX_LENGTH = 47;
-const GVIZ_SUFFIX_LENGTH = 2;
 const FALLBACK_DIRECTORY_CDN_URL =
   process.env.NEXT_PUBLIC_SHEET_FALLBACK_CSV_URL || "";
 
@@ -21,26 +19,6 @@ interface CsvRow {
   "Contact Method"?: string;
   Tags?: string;
   "Created At"?: string;
-}
-
-interface GvizCell {
-  v?: string | number | null;
-  f?: string | null;
-}
-
-interface GvizRow {
-  c: Array<GvizCell | null>;
-}
-
-interface GvizColumn {
-  label?: string;
-}
-
-interface GvizResponse {
-  table?: {
-    cols?: GvizColumn[];
-    rows?: GvizRow[];
-  };
 }
 
 function normalizeContactMethod(
@@ -102,9 +80,7 @@ function parseCsvText(
   });
 
   if (parsed.errors.length > 0) {
-    throw new Error(
-      parsed.errors[0]?.message ?? "Unable to parse fallback CSV.",
-    );
+    throw new Error(parsed.errors[0]?.message ?? "Unable to parse CSV.");
   }
 
   const records: PlayerRecord[] = [];
@@ -130,86 +106,16 @@ function parseSheetId(directorySource: string): string {
   return matchedSheetId[1];
 }
 
-function parseGvizPayload(rawText: string): GvizResponse {
-  if (rawText.length <= GVIZ_PREFIX_LENGTH + GVIZ_SUFFIX_LENGTH) {
-    throw new Error("GViz response payload was unexpectedly short.");
-  }
-
-  const jsonText = rawText.slice(
-    GVIZ_PREFIX_LENGTH,
-    rawText.length - GVIZ_SUFFIX_LENGTH,
-  );
-
-  return JSON.parse(jsonText) as GvizResponse;
+function parseGid(directorySource: string): string | null {
+  const matchedGid = directorySource.match(/[?&]gid=([0-9]+)/);
+  return matchedGid?.[1] ?? null;
 }
 
-function mapGvizToPlayerRecords(
-  payload: GvizResponse,
-  contactPlatforms: ContactPlatformOption[],
-): PlayerRecord[] {
-  const columns = payload.table?.cols ?? [];
-  const rows = payload.table?.rows ?? [];
-
-  if (columns.length === 0) {
-    throw new Error("GViz response did not contain any columns.");
-  }
-
-  const columnIndexes = new Map(
-    columns.map((column, index) => [column.label?.trim() ?? "", index]),
-  );
-
-  const records: PlayerRecord[] = [];
-
-  for (const row of rows) {
-    const cells = row.c ?? [];
-    const mappedRecord = mapRowToPlayerRecord(
-      {
-        IGN: readCell(cells, columnIndexes.get("IGN")),
-        "Friend Code": readCell(cells, columnIndexes.get("Friend Code")),
-        "Contact Link": readCell(cells, columnIndexes.get("Contact Link")),
-        "Contact Method": readCell(cells, columnIndexes.get("Contact Method")),
-        Tags: readCell(cells, columnIndexes.get("Tags")),
-        "Created At": readCell(cells, columnIndexes.get("Created At")),
-      },
-      contactPlatforms,
-    );
-
-    if (mappedRecord) {
-      records.push(mappedRecord);
-    }
-  }
-
-  return records;
-}
-
-function readCell(
-  cells: Array<GvizCell | null>,
-  index: number | undefined,
-): string | undefined {
-  if (index === undefined) {
-    return undefined;
-  }
-
-  const cell = cells[index];
-  if (!cell) {
-    return undefined;
-  }
-
-  if (typeof cell.f === "string" && cell.f.trim()) {
-    return cell.f;
-  }
-
-  if (cell.v === null || cell.v === undefined) {
-    return undefined;
-  }
-
-  return String(cell.v);
-}
-
-async function fetchPrimaryDirectory(
-  sheetId: string,
-  contactPlatforms: ContactPlatformOption[],
-): Promise<PlayerRecord[]> {
+async function fetchPrimaryDirectoryCsv(
+  directorySource: string,
+): Promise<string> {
+  const sheetId = parseSheetId(directorySource);
+  const gid = parseGid(directorySource);
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(
     () => controller.abort(),
@@ -217,13 +123,12 @@ async function fetchPrimaryDirectory(
   );
 
   try {
-    const response = await fetch(
-      `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tq=SELECT *`,
-      {
-        cache: "no-store",
-        signal: controller.signal,
-      },
-    );
+    const primaryUrl = process.env.NEXT_PUBLIC_SHEET_CSV_URL || "";
+
+    const response = await fetch(primaryUrl, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
 
     if (!response.ok) {
       throw new Error(
@@ -231,17 +136,13 @@ async function fetchPrimaryDirectory(
       );
     }
 
-    const rawText = await response.text();
-    const parsedPayload = parseGvizPayload(rawText);
-    return mapGvizToPlayerRecords(parsedPayload, contactPlatforms);
+    return await response.text();
   } finally {
     globalThis.clearTimeout(timeoutId);
   }
 }
 
-async function fetchFallbackDirectory(
-  contactPlatforms: ContactPlatformOption[],
-): Promise<PlayerRecord[]> {
+async function fetchFallbackDirectoryCsv(): Promise<string> {
   const response = await fetch(FALLBACK_DIRECTORY_CDN_URL, {
     cache: "no-store",
   });
@@ -250,19 +151,18 @@ async function fetchFallbackDirectory(
     throw new Error(`Fallback CDN fetch failed with status ${response.status}`);
   }
 
-  const csvText = await response.text();
-  return parseCsvText(csvText, contactPlatforms);
+  return await response.text();
 }
 
 export async function fetchDirectoryData(
   directorySource: string,
   contactPlatforms: ContactPlatformOption[],
 ): Promise<PlayerRecord[]> {
-  const sheetId = parseSheetId(directorySource);
-
   try {
-    return await fetchPrimaryDirectory(sheetId, contactPlatforms);
+    const csvText = await fetchPrimaryDirectoryCsv(directorySource);
+    return parseCsvText(csvText, contactPlatforms);
   } catch {
-    return fetchFallbackDirectory(contactPlatforms);
+    const fallbackCsvText = await fetchFallbackDirectoryCsv();
+    return parseCsvText(fallbackCsvText, contactPlatforms);
   }
 }
