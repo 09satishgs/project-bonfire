@@ -15,6 +15,7 @@ export function SearchPanel() {
   const filters = useBonfireStore((state) => state.filters);
   const missingQuery = useBonfireStore((state) => state.missingQuery);
   const watchlistIgns = useBonfireStore((state) => state.watchlistIgns);
+  const contactPlatforms = useBonfireStore((state) => state.contactPlatforms);
   const addWatchlist = useBonfireStore((state) => state.addWatchlistIgn);
   const setFilters = useBonfireStore((state) => state.setFilters);
 
@@ -40,13 +41,15 @@ export function SearchPanel() {
             value={filters.contactMethod}
           >
             <option value="all">All contact methods</option>
-            <option value="reddit">Reddit</option>
-            <option value="discord">Discord</option>
-            <option value="email">Email</option>
+            {contactPlatforms.map((platform) => (
+              <option key={platform.key} value={platform.key}>
+                {platform.label}
+              </option>
+            ))}
           </Select>
           <Input
             onChange={(event) => setFilters({ tag: event.target.value })}
-            placeholder="Filter by tag"
+            placeholder="Search within tag labels"
             value={filters.tag}
           />
         </div>

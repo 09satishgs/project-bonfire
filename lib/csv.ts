@@ -1,7 +1,12 @@
 import Papa from "papaparse";
 
 import { splitTags } from "@/lib/utils";
-import type { ContactMethod, PlayerRecord } from "@/lib/types";
+import { getContactMethod } from "@/lib/validation";
+import type {
+  ContactPlatformOption,
+  ContactMethod,
+  PlayerRecord,
+} from "@/lib/types";
 
 interface CsvRow {
   IGN?: string;
@@ -15,29 +20,32 @@ interface CsvRow {
 function normalizeContactMethod(
   value: string | undefined,
   contactLink: string,
-): ContactMethod {
+  contactPlatforms: ContactPlatformOption[],
+): ContactMethod | null {
   const lowerValue = value?.trim().toLowerCase();
+  const metadataMatch = getContactMethod(contactLink, contactPlatforms);
 
-  if (lowerValue === "reddit" || contactLink.includes("reddit.com")) {
-    return "reddit";
+  if (metadataMatch) {
+    return metadataMatch;
   }
 
-  if (lowerValue === "email" || contactLink.includes("@")) {
-    return "email";
+  if (
+    lowerValue &&
+    contactPlatforms.some((platform) => platform.key === lowerValue)
+  ) {
+    return lowerValue;
   }
 
-  return "discord";
+  return null;
 }
 
 export async function fetchAndParseCsv(
   csvUrl: string,
+  contactPlatforms: ContactPlatformOption[],
 ): Promise<PlayerRecord[]> {
-  console.log(999, csvUrl);
-
   const response = await fetch(csvUrl, {
     cache: "no-store",
   });
-  console.log(998, response);
 
   if (!response.ok) {
     throw new Error(`CSV fetch failed with status ${response.status}`);
@@ -60,8 +68,13 @@ export async function fetchAndParseCsv(
     const ign = row.IGN?.trim() ?? "";
     const friendCode = row["Friend Code"]?.replace(/\s+/g, "") ?? "";
     const contactLink = row["Contact Link"]?.trim() ?? "";
+    const contactMethod = normalizeContactMethod(
+      row["Contact Method"],
+      contactLink,
+      contactPlatforms,
+    );
 
-    if (!ign || !contactLink) {
+    if (!ign || !contactLink || !contactMethod) {
       continue;
     }
 
@@ -69,7 +82,7 @@ export async function fetchAndParseCsv(
       ign,
       friendCode,
       contactLink,
-      contactMethod: normalizeContactMethod(row["Contact Method"], contactLink),
+      contactMethod,
       tags: splitTags(row.Tags ?? ""),
       createdAt: row["Created At"]?.trim() || undefined,
     });

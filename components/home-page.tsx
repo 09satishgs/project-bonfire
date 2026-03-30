@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { PageHero } from "@/components/page-hero";
 import { PlayerCard } from "@/components/player-card";
 import { RegisterForm } from "@/components/register-form";
-import { Badge } from "@/components/ui/badge";
+import { getMyRegistration } from "@/lib/idb";
+import type { PlayerRecord } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -21,9 +22,21 @@ interface HomePageProps {
 }
 
 export function HomePage({ adminEmail }: HomePageProps) {
+  const [myRegistration, setMyRegistration] = useState<PlayerRecord | null>(null);
+  const [registrationLoaded, setRegistrationLoaded] = useState(false);
   const records = useBonfireStore((state) => state.records);
   const bootstrapLoading = useBonfireStore((state) => state.bootstrapLoading);
   const lastFetchedAt = useBonfireStore((state) => state.lastFetchedAt);
+
+  useEffect(() => {
+    async function loadMyRegistration() {
+      const storedRegistration = await getMyRegistration();
+      setMyRegistration(storedRegistration);
+      setRegistrationLoaded(true);
+    }
+
+    void loadMyRegistration();
+  }, []);
 
   const stats = useMemo(() => {
     const tags = new Set(
@@ -51,9 +64,8 @@ export function HomePage({ adminEmail }: HomePageProps) {
     <>
       <PageHero
         aside={
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Stat label="Players" value={String(stats.players)} />
-            <Stat label="Tags" value={String(stats.tags)} />
             <Stat label="Last Sync" value={stats.lastFetched} />
           </div>
         }
@@ -62,7 +74,25 @@ export function HomePage({ adminEmail }: HomePageProps) {
         title="A fast global directory for reconnecting with Pokemon GO friends by IGN."
       />
       <WatchlistAlerts />
-      <RegisterForm />
+      {!registrationLoaded ? (
+        <Card className="border-white/70 bg-white/85 backdrop-blur">
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Checking for your saved registration...
+          </CardContent>
+        </Card>
+      ) : myRegistration ? (
+        <Card className="border-white/70 bg-white/85 backdrop-blur">
+          <CardHeader>
+            <CardTitle>You have successfully registered your IGN.</CardTitle>
+            <CardDescription>This device already has a saved registration.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PlayerCard adminEmail={adminEmail} player={myRegistration} titleSuffix="(YOU)" />
+          </CardContent>
+        </Card>
+      ) : (
+        <RegisterForm onRegistered={setMyRegistration} />
+      )}
       <section>
         <Card className="border-white/70 bg-white/82">
           <CardHeader>

@@ -18,7 +18,6 @@ export function BottomNav() {
   const watchlistMatchCount = useBonfireStore(
     (state) => state.watchlistMatches.length,
   );
-  console.log("qwerty", watchlistMatchCount);
 
   return (
     <nav className="fixed inset-x-0 bottom-5 z-50 flex justify-center px-4">

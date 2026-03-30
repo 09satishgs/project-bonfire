@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { appendRegistration, getExistingIgns } from "@/lib/google-sheets";
+import { fetchRegistrationMetadata, getRegistrationMetadataUrl } from "@/lib/registration-metadata";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { normalizeIgn } from "@/lib/utils";
 import { validateRegistrationPayload } from "@/lib/validation";
@@ -41,25 +42,31 @@ export async function POST(request: Request) {
     );
   }
 
-  const validation = validateRegistrationPayload(payload);
-  if (!validation.ok) {
-    return NextResponse.json<ApiErrorPayload>({ error: validation.error }, { status: 400 });
-  }
-
   try {
+    const registrationMetadata = await fetchRegistrationMetadata(getRegistrationMetadataUrl());
+    const validatedPayload = validateRegistrationPayload(
+      payload,
+      registrationMetadata.contactPlatforms,
+      registrationMetadata.tagOptions,
+    );
+
+    if (!validatedPayload.ok) {
+      return NextResponse.json<ApiErrorPayload>({ error: validatedPayload.error }, { status: 400 });
+    }
+
     const existingIgns = await getExistingIgns();
-    const exists = existingIgns.some((ign) => normalizeIgn(ign) === normalizeIgn(validation.normalized.ign));
+    const exists = existingIgns.some((ign) => normalizeIgn(ign) === normalizeIgn(validatedPayload.normalized.ign));
 
     if (exists) {
       return NextResponse.json<ApiErrorPayload>({ error: "That IGN is already registered." }, { status: 409 });
     }
 
-    await appendRegistration(validation.normalized);
+    await appendRegistration(validatedPayload.normalized);
 
     return NextResponse.json<RegistrationSuccess>(
       {
         message: "Registration created. Your entry will appear after the next CSV refresh.",
-        record: validation.normalized,
+        record: validatedPayload.normalized,
       },
       { status: 201 },
     );
