@@ -196,20 +196,22 @@ export function PlayerCard({
           <div className="grid grid-cols-2 gap-3">
             <button
               className={cn(
-                "inline-flex h-10 w-full items-center justify-center rounded-md border border-border bg-orange-100 px-4 text-sm font-medium transition-colors hover:bg-orange-500 hover:text-white",
+                "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-border bg-orange-100 px-4 text-sm font-medium transition-colors hover:bg-orange-500 hover:text-white",
               )}
               onClick={() => openDialog("correct")}
               type="button"
             >
+              <CorrectIcon className="h-4 w-4" />
               Correct
             </button>
             <button
               className={cn(
-                "inline-flex h-10 w-full items-center justify-center rounded-md border border-border bg-red-100 px-4 text-sm font-medium transition-colors hover:bg-red-500 hover:text-white",
+                "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-border bg-red-100 px-4 text-sm font-medium text-red-700 transition-colors hover:bg-red-500 hover:text-white",
               )}
               onClick={() => openDialog("report")}
               type="button"
             >
+              <FlagIcon className="h-4 w-4" />
               Report
             </button>
           </div>
@@ -343,6 +345,47 @@ function CopyIcon({ className }: { className?: string }) {
       <path
         d="M15 7V5a2 2 0 0 0-2-2H6A2 2 0 0 0 4 5v9a2 2 0 0 0 2 2h3"
         stroke="currentColor"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function CorrectIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24">
+      <path
+        d="m4 16 4.5 4.5L20 9"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M20 15v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function FlagIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24">
+      <path
+        d="M6 21V5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M6 5c4-2.5 8 2.5 12 0v9c-4 2.5-8-2.5-12 0"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         strokeWidth="1.8"
       />
     </svg>

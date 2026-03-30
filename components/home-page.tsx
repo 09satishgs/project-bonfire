@@ -22,7 +22,9 @@ interface HomePageProps {
 }
 
 export function HomePage({ adminEmail }: HomePageProps) {
-  const [myRegistration, setMyRegistration] = useState<PlayerRecord | null>(null);
+  const [myRegistration, setMyRegistration] = useState<PlayerRecord | null>(
+    null,
+  );
   const [registrationLoaded, setRegistrationLoaded] = useState(false);
   const records = useBonfireStore((state) => state.records);
   const bootstrapLoading = useBonfireStore((state) => state.bootstrapLoading);
@@ -70,8 +72,8 @@ export function HomePage({ adminEmail }: HomePageProps) {
           </div>
         }
         badge="Home base"
-        description="Track the latest trainer beacons, register your own contact trail, and keep a pulse on the size of the bonfire."
-        title="A fast global directory for reconnecting with Pokemon GO friends by IGN."
+        description="Track the latest trainer cards, register your own contact trail, and keep a pulse on the size of the bonfire."
+        title="A fast global directory for connecting with Pokemon GO players outside the game using IGN."
       />
       <WatchlistAlerts />
       {!registrationLoaded ? (
@@ -84,10 +86,16 @@ export function HomePage({ adminEmail }: HomePageProps) {
         <Card className="border-white/70 bg-white/85 backdrop-blur">
           <CardHeader>
             <CardTitle>You have successfully registered your IGN.</CardTitle>
-            <CardDescription>This device already has a saved registration.</CardDescription>
+            <CardDescription>
+              This is your registered information
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <PlayerCard adminEmail={adminEmail} player={myRegistration} titleSuffix="(YOU)" />
+            <PlayerCard
+              adminEmail={adminEmail}
+              player={myRegistration}
+              titleSuffix="(YOU)"
+            />
           </CardContent>
         </Card>
       ) : (
