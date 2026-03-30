@@ -53,7 +53,7 @@ export function SearchPage({ adminEmail }: SearchPageProps) {
   return (
     <>
       <PageHero
-        badge="Search route"
+        badge="Search"
         description="Look up trainers by IGN, filter by contact method or tags, and report or correct entries from the result cards."
         title="Find the friend behind the IGN."
       />

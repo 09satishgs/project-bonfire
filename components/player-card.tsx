@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTagLabel } from "@/lib/registration-metadata";
-import { cn } from "@/lib/utils";
+import { cn, getLocalTimestamp } from "@/lib/utils";
 import type { PlayerRecord } from "@/lib/types";
 import { useBonfireStore } from "@/stores/bonfire-store";
 import { Input } from "./ui/input";
@@ -109,17 +109,6 @@ export function PlayerCard({
 
     return `mailto:${adminEmail}?subject=${encodeURIComponent(`${subjectPrefix}:${player.ign}`)}&body=${encodeURIComponent(body)}`;
   }
-
-  const getLocalTimestamp = (date: string) => {
-    return new Date(date).toLocaleString(undefined, {
-      timeZoneName: "short",
-      day: "numeric",
-      month: "short",
-      year: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   return (
     <>

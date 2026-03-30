@@ -15,3 +15,13 @@ export function splitTags(input: string): string[] {
     .map((tag) => tag.trim())
     .filter(Boolean);
 }
+export const getLocalTimestamp = (date: string | number) => {
+  return new Date(date).toLocaleString(undefined, {
+    timeZoneName: "short",
+    day: "numeric",
+    month: "short",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
