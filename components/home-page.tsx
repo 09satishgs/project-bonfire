@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { useBonfireStore } from "@/stores/bonfire-store";
 import { WatchlistAlerts } from "./watchlist-alerts";
+import { getLocalTimestamp } from "@/lib/utils";
 
 interface HomePageProps {
   adminEmail: string;
@@ -56,7 +57,7 @@ export function HomePage({ adminEmail }: HomePageProps) {
       players: records.length,
       tags: tags.size,
       lastFetched: lastFetchedAt
-        ? new Date(lastFetchedAt).toLocaleString()
+        ? getLocalTimestamp(lastFetchedAt)
         : "Not synced yet",
       newest: newest.slice(0, 3),
     };
@@ -71,7 +72,7 @@ export function HomePage({ adminEmail }: HomePageProps) {
             <Stat label="Last Sync" value={stats.lastFetched} />
           </div>
         }
-        badge="Home base"
+        badge="Home"
         description="Track the latest trainer cards, register your own contact trail, and keep a pulse on the size of the bonfire."
         title="A fast global directory for connecting with Pokemon GO players outside the game using IGN."
       />
