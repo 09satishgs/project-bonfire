@@ -46,9 +46,10 @@ function normalizeContact(
 
   return {
     contactMethod: metadataMatch.key,
-    contactKind: lowerKind === "link_contact" || lowerKind === "id_contact"
-      ? lowerKind
-      : metadataMatch.kind,
+    contactKind:
+      lowerKind === "link_contact" || lowerKind === "id_contact"
+        ? lowerKind
+        : metadataMatch.kind,
   };
 }
 
@@ -66,18 +67,6 @@ function mapRowToPlayerRecord(
     contactLink,
     contactPlatforms,
   );
-
-  console.log("[directory:parse] row input", {
-    rowIndex,
-    ign,
-    friendCode,
-    contactLink,
-    contactMethodRaw: row["Contact Method"],
-    contactKindRaw: row["Contact Kind"],
-    tagsRaw: row.Tags,
-    createdAtRaw: row["Created At"],
-    contactConfig,
-  });
 
   if (!ign || !contactLink || !contactConfig) {
     console.warn("[directory:parse] row dropped", {
@@ -107,22 +96,9 @@ function parseCsvText(
   csvText: string,
   contactPlatforms: ContactPlatformOption[],
 ): PlayerRecord[] {
-  console.log("[directory:parse] csv text preview", {
-    textLength: csvText.length,
-    preview: csvText.slice(0, 300),
-  });
-
   const parsed = Papa.parse<CsvRow>(csvText, {
     header: true,
     skipEmptyLines: true,
-  });
-
-  console.log("[directory:parse] csv parse summary", {
-    rowCount: parsed.data.length,
-    errorCount: parsed.errors.length,
-    fields: parsed.meta.fields,
-    firstRow: parsed.data[0] ?? null,
-    secondRow: parsed.data[1] ?? null,
   });
 
   if (parsed.errors.length > 0) {
@@ -133,24 +109,11 @@ function parseCsvText(
   const records: PlayerRecord[] = [];
 
   for (const [rowIndex, row] of parsed.data.entries()) {
-    const mappedRecord = mapRowToPlayerRecord(
-      row,
-      contactPlatforms,
-      rowIndex,
-    );
+    const mappedRecord = mapRowToPlayerRecord(row, contactPlatforms, rowIndex);
     if (mappedRecord) {
-      console.log("[directory:parse] row mapped", {
-        rowIndex,
-        mappedRecord,
-      });
       records.push(mappedRecord);
     }
   }
-
-  console.log("[directory:parse] final mapped records", {
-    count: records.length,
-    firstRecord: records[0] ?? null,
-  });
 
   return records;
 }
