@@ -165,7 +165,8 @@ export function PlayerCard({
           </div>
           <div>
             <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              Contact
+              Contact ({contactLabel}
+              {player.contactKind !== "link_contact" ? "ID" : "Link"})
             </div>
             {player.contactKind === "link_contact" && contactHref ? (
               <a
@@ -187,7 +188,9 @@ export function PlayerCard({
                   }}
                   type="button"
                 >
-                  <span className="break-all text-left">{player.contactLink}</span>
+                  <span className="break-all text-left">
+                    {player.contactLink}
+                  </span>
                   <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
                     {contactCopied ? "Copied" : "Copy"}
                     <CopyIcon className="h-4 w-4" />
@@ -199,7 +202,7 @@ export function PlayerCard({
           <div className="mt-auto grid grid-cols-2 gap-3 pt-2">
             <button
               className={cn(
-                "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-orange-500/30 bg-orange-500/12 px-4 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-500 hover:text-white",
+                "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-orange-500/30 bg-orange-500/50 px-4 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-500 hover:text-white",
                 "dark:text-orange-100",
               )}
               onClick={() => openDialog("correct")}
@@ -210,7 +213,7 @@ export function PlayerCard({
             </button>
             <button
               className={cn(
-                "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-danger/30 bg-danger/10 px-4 text-sm font-medium text-red-700 transition-colors hover:bg-danger hover:text-white",
+                "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-danger/30 bg-danger/50 px-4 text-sm font-medium text-red-700 transition-colors hover:bg-danger hover:text-white",
                 "dark:text-red-100",
               )}
               onClick={() => openDialog("report")}
