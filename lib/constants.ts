@@ -1,5 +1,5 @@
-export const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-export const METADATA_CACHE_TTL_MS = 28 * 24 * 60 * 60 * 1000;
+export const CACHE_TTL_MS = 0 * 60 * 60 * 1000;
+export const METADATA_CACHE_TTL_MS = 0 * 24 * 60 * 60 * 1000;
 export const MASTER_LIST_KEY = "master_ign_list";
 export const LAST_FETCH_KEY = "last_fetch_timestamp";
 export const MY_REGISTRATION_KEY = "my_registration";

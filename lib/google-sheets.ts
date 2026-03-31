@@ -46,7 +46,7 @@ export async function appendRegistration(record: PlayerRecord): Promise<void> {
   const sheets = getSheetsClient();
   await sheets.spreadsheets.values.append({
     spreadsheetId: getSheetId(),
-    range: "A:F",
+    range: "A:G",
     valueInputOption: "RAW",
     requestBody: {
       values: [
@@ -55,6 +55,7 @@ export async function appendRegistration(record: PlayerRecord): Promise<void> {
           record.friendCode,
           record.contactLink,
           record.contactMethod,
+          record.contactKind,
           record.tags.join(", "),
           record.createdAt ?? new Date().toISOString(),
         ],
