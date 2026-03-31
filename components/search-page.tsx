@@ -60,7 +60,7 @@ export function SearchPage({ adminEmail }: SearchPageProps) {
 
       <section className="space-y-6">
         <SearchPanel />
-        <Card className="border-white/70 bg-white/80">
+        <Card className="border-border/80 bg-card/80">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-muted-foreground">
             <span>
               {records.length} total trainers loaded into local memory.
@@ -70,7 +70,7 @@ export function SearchPage({ adminEmail }: SearchPageProps) {
             </span>
           </CardContent>
         </Card>
-        <Card className="border-white/70 bg-white/82">
+        <Card className="border-border/80 bg-card/85">
           <CardContent className="space-y-4 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -150,7 +150,7 @@ export function SearchPage({ adminEmail }: SearchPageProps) {
           </CardContent>
         </Card>
         {bootstrapLoading ? (
-          <Card className="border-white/70 bg-white/75">
+          <Card className="border-border/80 bg-card/75">
             <CardContent className="p-8 text-sm text-muted-foreground">
               Syncing trainer directory...
             </CardContent>

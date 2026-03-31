@@ -60,7 +60,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
     : "";
 
   return (
-    <Card className="border-white/70 bg-white/85 backdrop-blur">
+    <Card className="border-border/80 bg-card/85 backdrop-blur">
       <CardHeader>
         <CardTitle>Add Your Contact Beacon</CardTitle>
         <CardDescription>

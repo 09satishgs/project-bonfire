@@ -22,7 +22,7 @@ export function SearchPanel() {
   const alreadyWatching = missingQuery ? watchlistIgns.includes(missingQuery.trim().toLowerCase()) : false;
 
   return (
-    <Card className="border-white/70 bg-white/80 backdrop-blur">
+    <Card className="border-border/80 bg-card/80 backdrop-blur">
       <CardHeader>
         <CardTitle>Search The Bonfire</CardTitle>
         <CardDescription>Everything filters instantly from local memory after sync. No search-time network calls.</CardDescription>

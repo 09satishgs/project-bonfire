@@ -21,8 +21,8 @@ export function AppChrome({ children, csvUrl }: AppChromeProps) {
       <div className="pb-28">
         <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
           {bootstrapError ? (
-            <Card className="border-danger/20 bg-red-50">
-              <CardContent className="p-4 text-sm text-red-800">
+            <Card className="border-danger/30 bg-danger/10">
+              <CardContent className="p-4 text-sm text-red-200">
                 {bootstrapError}
               </CardContent>
             </Card>
