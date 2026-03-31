@@ -1,10 +1,9 @@
 import Papa from "papaparse";
 
 import { splitTags } from "@/lib/utils";
-import { getContactMethod } from "@/lib/validation";
 import type {
   ContactPlatformOption,
-  ContactMethod,
+  ContactKind,
   PlayerRecord,
 } from "@/lib/types";
 
@@ -17,46 +16,79 @@ interface CsvRow {
   "Friend Code"?: string;
   "Contact Link"?: string;
   "Contact Method"?: string;
+  "Contact Kind"?: string;
   Tags?: string;
   "Created At"?: string;
 }
 
-function normalizeContactMethod(
+function normalizeContact(
+  methodValue: string | undefined,
+  kindValue: string | undefined,
   value: string | undefined,
-  contactLink: string,
   contactPlatforms: ContactPlatformOption[],
-): ContactMethod | null {
-  const lowerValue = value?.trim().toLowerCase();
-  const metadataMatch = getContactMethod(contactLink, contactPlatforms);
+): { contactMethod: string; contactKind: ContactKind } | null {
+  const lowerMethod = methodValue?.trim().toLowerCase();
+  const lowerKind = kindValue?.trim().toLowerCase() as ContactKind | undefined;
 
-  if (metadataMatch) {
-    return metadataMatch;
+  if (!lowerMethod || !value?.trim()) {
+    return null;
   }
 
-  if (
-    lowerValue &&
-    contactPlatforms.some((platform) => platform.key === lowerValue)
-  ) {
-    return lowerValue;
+  const metadataMatch = contactPlatforms.find(
+    (platform) =>
+      platform.key.trim().toLowerCase() === lowerMethod ||
+      platform.label.trim().toLowerCase() === lowerMethod,
+  );
+
+  if (!metadataMatch) {
+    return null;
   }
 
-  return null;
+  return {
+    contactMethod: metadataMatch.key,
+    contactKind: lowerKind === "link_contact" || lowerKind === "id_contact"
+      ? lowerKind
+      : metadataMatch.kind,
+  };
 }
 
 function mapRowToPlayerRecord(
   row: CsvRow,
   contactPlatforms: ContactPlatformOption[],
+  rowIndex: number,
 ): PlayerRecord | null {
   const ign = row.IGN?.trim() ?? "";
   const friendCode = row["Friend Code"]?.replace(/\s+/g, "") ?? "";
   const contactLink = row["Contact Link"]?.trim() ?? "";
-  const contactMethod = normalizeContactMethod(
+  const contactConfig = normalizeContact(
     row["Contact Method"],
+    row["Contact Kind"],
     contactLink,
     contactPlatforms,
   );
 
-  if (!ign || !contactLink || !contactMethod) {
+  console.log("[directory:parse] row input", {
+    rowIndex,
+    ign,
+    friendCode,
+    contactLink,
+    contactMethodRaw: row["Contact Method"],
+    contactKindRaw: row["Contact Kind"],
+    tagsRaw: row.Tags,
+    createdAtRaw: row["Created At"],
+    contactConfig,
+  });
+
+  if (!ign || !contactLink || !contactConfig) {
+    console.warn("[directory:parse] row dropped", {
+      rowIndex,
+      reason: !ign
+        ? "missing_ign"
+        : !contactLink
+          ? "missing_contact_link"
+          : "missing_contact_config",
+      row,
+    });
     return null;
   }
 
@@ -64,7 +96,8 @@ function mapRowToPlayerRecord(
     ign,
     friendCode,
     contactLink,
-    contactMethod,
+    contactMethod: contactConfig.contactMethod,
+    contactKind: contactConfig.contactKind,
     tags: splitTags(row.Tags ?? ""),
     createdAt: row["Created At"]?.trim() || undefined,
   };
@@ -74,23 +107,50 @@ function parseCsvText(
   csvText: string,
   contactPlatforms: ContactPlatformOption[],
 ): PlayerRecord[] {
+  console.log("[directory:parse] csv text preview", {
+    textLength: csvText.length,
+    preview: csvText.slice(0, 300),
+  });
+
   const parsed = Papa.parse<CsvRow>(csvText, {
     header: true,
     skipEmptyLines: true,
   });
 
+  console.log("[directory:parse] csv parse summary", {
+    rowCount: parsed.data.length,
+    errorCount: parsed.errors.length,
+    fields: parsed.meta.fields,
+    firstRow: parsed.data[0] ?? null,
+    secondRow: parsed.data[1] ?? null,
+  });
+
   if (parsed.errors.length > 0) {
+    console.error("[directory:parse] csv parse errors", parsed.errors);
     throw new Error(parsed.errors[0]?.message ?? "Unable to parse CSV.");
   }
 
   const records: PlayerRecord[] = [];
 
-  for (const row of parsed.data) {
-    const mappedRecord = mapRowToPlayerRecord(row, contactPlatforms);
+  for (const [rowIndex, row] of parsed.data.entries()) {
+    const mappedRecord = mapRowToPlayerRecord(
+      row,
+      contactPlatforms,
+      rowIndex,
+    );
     if (mappedRecord) {
+      console.log("[directory:parse] row mapped", {
+        rowIndex,
+        mappedRecord,
+      });
       records.push(mappedRecord);
     }
   }
+
+  console.log("[directory:parse] final mapped records", {
+    count: records.length,
+    firstRecord: records[0] ?? null,
+  });
 
   return records;
 }

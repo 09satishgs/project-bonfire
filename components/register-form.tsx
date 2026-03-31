@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { setMyRegistration } from "@/lib/idb";
 import {
-  getContactMethod,
   isValidFriendCode,
   isValidIgn,
+  buildContactValue,
 } from "@/lib/validation";
 import { useBonfireStore } from "@/stores/bonfire-store";
 import type {
@@ -28,7 +28,7 @@ import type {
 const initialForm: RegistrationPayload = {
   ign: "",
   friendCode: "",
-  contactLink: "",
+  contactId: "",
   contactMethod: "",
   tagIndexes: "",
   honeypot: "",
@@ -50,7 +50,14 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
     isValidIgn(form.ign) &&
     (!form.friendCode.trim() || isValidFriendCode(form.friendCode)) &&
     Boolean(form.contactMethod) &&
+    Boolean(form.contactId.trim()) &&
     !form.honeypot;
+  const selectedContactPlatform = contactPlatforms.find(
+    (platform) => platform.key === form.contactMethod,
+  );
+  const contactPreview = selectedContactPlatform
+    ? buildContactValue(selectedContactPlatform.pattern, form.contactId)
+    : "";
 
   return (
     <Card className="border-white/70 bg-white/85 backdrop-blur">
@@ -122,43 +129,51 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
               placeholder="Friend Code (Optional)"
               value={form.friendCode}
             />
-            <Input
-              onChange={(event) => {
-                const contactLink = event.target.value;
-                const detectedMethod =
-                  getContactMethod(contactLink, contactPlatforms) ?? "";
+            <Select
+              onChange={(event) =>
                 setForm((current) => ({
                   ...current,
-                  contactLink,
-                  contactMethod: detectedMethod,
-                }));
-              }}
-              placeholder={`Paste a ${contactPlatforms?.map(({ label }) => label).join("/ ")} profile link`}
-              required
-              value={form.contactLink}
-            />
+                  contactMethod: event.target.value,
+                }))
+              }
+              value={form.contactMethod}
+            >
+              <option value="">Select contact method</option>
+              {contactPlatforms.map((platform) => (
+                <option key={platform.key} value={platform.key}>
+                  {platform.label}
+                </option>
+              ))}
+            </Select>
           </div>
           <div className="grid gap-4 md:grid-cols-[1fr,1.4fr]">
             <div className="space-y-2">
               <label
                 className="text-sm font-medium text-foreground"
-                htmlFor="contact-method"
+                htmlFor="contact-id"
               >
-                Contact Type
+                Contact ID
               </label>
-              <Select
-                className="bg-muted text-muted-foreground"
-                disabled
-                id="contact-method"
-                value={form.contactMethod}
-              >
-                <option value="">Auto-detected from link</option>
-                {contactPlatforms.map((platform) => (
-                  <option key={platform.key} value={platform.key}>
-                    {platform.label}
-                  </option>
-                ))}
-              </Select>
+              <Input
+                id="contact-id"
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    contactId: event.target.value,
+                  }))
+                }
+                placeholder="Username, profile name, or ID"
+                value={form.contactId}
+              />
+              {contactPreview ? (
+                <p className="text-xs text-muted-foreground">
+                  Stored as: {contactPreview}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Choose a contact method and enter the matching username or ID.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <div className="text-sm font-medium text-foreground">Tags</div>
@@ -225,8 +240,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
               {isPending ? "Submitting..." : "Register"}
             </Button>
             <span className="text-sm text-muted-foreground">
-              IGN is required. Friend Code is optional but must be 12 digits if
-              included.
+              IGN is required. Friend Code is optional but must be 12 digits if included.
             </span>
           </div>
           {message ? (

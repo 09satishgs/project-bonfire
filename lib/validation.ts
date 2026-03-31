@@ -1,7 +1,6 @@
 import { defaultRegistrationMetadata } from "@/lib/registration-metadata";
 import {
   type ContactPlatformOption,
-  type ContactMethod,
   type PlayerRecord,
   type RegistrationPayload,
   type TagOption,
@@ -10,32 +9,19 @@ import {
 const ignRegex = /^[A-Za-z0-9 _-]{3,15}$/;
 const friendCodeRegex = /^\d{4}\s?\d{4}\s?\d{4}$/;
 
-export function getContactMethod(
-  contactLink: string,
-  contactPlatforms: ContactPlatformOption[] = defaultRegistrationMetadata.contactPlatforms,
-): ContactMethod | null {
-  const trimmedLink = contactLink.trim();
-
-  for (const option of contactPlatforms) {
-    try {
-      const regex = new RegExp(option.pattern, "i");
-      if (regex.test(trimmedLink)) {
-        return option.key;
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
-
 export function isValidIgn(ign: string): boolean {
   return ignRegex.test(ign.trim());
 }
 
 export function isValidFriendCode(friendCode: string): boolean {
   return friendCodeRegex.test(friendCode.trim());
+}
+
+export function buildContactValue(
+  pattern: string,
+  contactId: string,
+): string {
+  return pattern.replace("{USERNAME}", contactId.trim());
 }
 
 function normalizeTagIndexes(
@@ -74,7 +60,7 @@ export function validateRegistrationPayload(
 ): { ok: true; normalized: PlayerRecord } | { ok: false; error: string } {
   const ign = payload.ign.trim();
   const friendCode = payload.friendCode.replace(/\s+/g, "");
-  const contactLink = payload.contactLink.trim();
+  const contactId = payload.contactId.trim();
   const tagIndexes = normalizeTagIndexes(payload.tagIndexes, tagOptions);
 
   if (!isValidIgn(ign)) {
@@ -92,18 +78,20 @@ export function validateRegistrationPayload(
     };
   }
 
-  const contactMethod = getContactMethod(contactLink, contactPlatforms);
-  if (!contactMethod) {
+  const contactPlatform = contactPlatforms.find(
+    (platform) => platform.key === payload.contactMethod,
+  );
+  if (!contactPlatform) {
     return {
       ok: false,
-      error: "Contact Link must match one of the supported social platforms.",
+      error: "Choose a valid contact method.",
     };
   }
 
-  if (payload.contactMethod !== contactMethod) {
+  if (!contactId) {
     return {
       ok: false,
-      error: "Contact type does not match the supplied link.",
+      error: "Contact ID is required.",
     };
   }
 
@@ -116,8 +104,9 @@ export function validateRegistrationPayload(
     normalized: {
       ign,
       friendCode,
-      contactLink,
-      contactMethod,
+      contactLink: buildContactValue(contactPlatform.pattern, contactId),
+      contactMethod: contactPlatform.key,
+      contactKind: contactPlatform.kind,
       tags: tagIndexes,
       createdAt: new Date().toISOString(),
     },

@@ -1,6 +1,8 @@
 export type ContactMethod = string;
+export type ContactKind = "link_contact" | "id_contact";
 
 export interface ContactPlatformOption {
+  kind: ContactKind;
   key: string;
   label: string;
   pattern: string;
@@ -16,6 +18,7 @@ export interface PlayerRecord {
   friendCode: string;
   contactLink: string;
   contactMethod: ContactMethod;
+  contactKind: ContactKind;
   tags: string[];
   createdAt?: string;
 }
@@ -23,7 +26,7 @@ export interface PlayerRecord {
 export interface RegistrationPayload {
   ign: string;
   friendCode: string;
-  contactLink: string;
+  contactId: string;
   contactMethod: string;
   tagIndexes: string;
   honeypot?: string;

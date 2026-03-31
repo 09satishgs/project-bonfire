@@ -13,24 +13,34 @@ interface MetadataRow {
 export const defaultRegistrationMetadata: RegistrationMetadata = {
   contactPlatforms: [
     {
+      kind: "link_contact",
       key: "reddit",
       label: "Reddit",
-      pattern: "^https:\\/\\/(www\\.)?reddit\\.com\\/(user|u)\\/[A-Za-z0-9_-]+\\/?$",
+      pattern: "https://www.reddit.com/u/{USERNAME}",
     },
     {
-      key: "telegram",
-      label: "Telegram",
-      pattern: "^https:\\/\\/(t\\.me|telegram\\.me)\\/[A-Za-z0-9_]{5,32}\\/?$",
+      kind: "id_contact",
+      key: "discord",
+      label: "Discord",
+      pattern: "{USERNAME}",
     },
     {
-      key: "instagram",
-      label: "Instagram",
-      pattern: "^https:\\/\\/(www\\.)?instagram\\.com\\/[A-Za-z0-9._]+\\/?$",
+      kind: "link_contact",
+      key: "twitch",
+      label: "Twitch",
+      pattern: "https://www.twitch.tv/{USERNAME}",
     },
     {
-      key: "x",
-      label: "X",
-      pattern: "^https:\\/\\/(www\\.)?(x\\.com|twitter\\.com)\\/[A-Za-z0-9_]{1,15}\\/?$",
+      kind: "link_contact",
+      key: "guilded",
+      label: "Guilded",
+      pattern: "https://www.guilded.gg/{USERNAME}",
+    },
+    {
+      kind: "id_contact",
+      key: "campfire",
+      label: "Campfire",
+      pattern: "@{USERNAME}",
     },
   ],
   tagOptions: [
@@ -69,13 +79,13 @@ export async function fetchRegistrationMetadata(csvUrl?: string): Promise<Regist
     for (const row of parsed.data) {
       const kind = row.kind?.trim().toLowerCase();
 
-      if (kind === "contact") {
+      if (kind === "link_contact" || kind === "id_contact") {
         const key = row.key?.trim().toLowerCase();
         const label = row.label?.trim();
         const pattern = row.pattern?.trim();
 
         if (key && label && pattern) {
-          contactPlatforms.push({ key, label, pattern });
+          contactPlatforms.push({ kind, key, label, pattern });
         }
       }
 
@@ -108,4 +118,11 @@ export function getTagLabel(tagValue: string, tagOptions: TagOption[]): string {
   }
 
   return tagOptions.find((tag) => tag.index === tagIndex)?.label ?? `#Tag${tagIndex}`;
+}
+
+export function getContactPlatform(
+  key: string,
+  contactPlatforms: ContactPlatformOption[],
+): ContactPlatformOption | undefined {
+  return contactPlatforms.find((platform) => platform.key === key);
 }

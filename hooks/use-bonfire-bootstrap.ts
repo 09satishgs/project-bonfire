@@ -83,7 +83,12 @@ export function useBonfireBootstrap(csvUrl: string | undefined) {
         setWatchlistIgns(watchlistIgns);
         setStoreWatchlistMatches(persistedMatches.map((match) => match.ign));
 
-        if (cachedRecords && cachedFetchedAt && Date.now() - cachedFetchedAt < CACHE_TTL_MS) {
+        if (
+          cachedRecords &&
+          cachedRecords.length > 0 &&
+          cachedFetchedAt &&
+          Date.now() - cachedFetchedAt < CACHE_TTL_MS
+        ) {
           setRecords(cachedRecords, cachedFetchedAt);
           setBootstrapStatus(false, null);
           return;

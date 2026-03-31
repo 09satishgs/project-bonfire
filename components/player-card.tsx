@@ -43,17 +43,15 @@ export function PlayerCard({
   adminEmail,
   titleSuffix,
 }: PlayerCardProps) {
-  console.log(player);
-
   const [copied, setCopied] = useState(false);
+  const [contactCopied, setContactCopied] = useState(false);
   const [openModal, setOpenModal] = useState<ModerationMode | null>(null);
   const [draft, setDraft] = useState<ModerationDraft>(initialDraft);
   const [mounted, setMounted] = useState(false);
   const contactPlatforms = useBonfireStore((state) => state.contactPlatforms);
   const tagOptions = useBonfireStore((state) => state.tagOptions);
-  const contactHref = player.contactLink.startsWith("https")
-    ? player.contactLink
-    : null;
+  const contactHref =
+    player.contactKind === "link_contact" ? player.contactLink : null;
   const contactLabel =
     contactPlatforms.find((platform) => platform.key === player.contactMethod)
       ?.label ?? player.contactMethod;
@@ -112,7 +110,7 @@ export function PlayerCard({
 
   return (
     <>
-      <Card className="h-full border-white/60 bg-white/85 backdrop-blur">
+      <Card className="flex h-full flex-col border-white/60 bg-white/85 backdrop-blur">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="space-y-2">
             <CardTitle className="text-xl">
@@ -140,7 +138,7 @@ export function PlayerCard({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm">
+        <CardContent className="flex flex-1 flex-col gap-4 text-sm">
           <div>
             <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
               Friend Code
@@ -169,20 +167,36 @@ export function PlayerCard({
             <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
               Contact
             </div>
-            {contactHref ? (
+            {player.contactKind === "link_contact" && contactHref ? (
               <a
-                className="mt-1 block max-w-full overflow-x-hidden font-medium text-primary underline-offset-4 hover:underline"
+                className="mt-1 block break-all font-medium text-primary underline-offset-4 hover:underline"
                 href={contactHref}
                 rel="noreferrer"
-                target={"_blank"}
+                target="_blank"
               >
                 {player.contactLink}
               </a>
             ) : (
-              <div className="mt-1 font-medium">{player.contactLink}</div>
+              <div className="mt-1 space-y-2">
+                <button
+                  className="inline-flex min-h-10 w-full items-center justify-between gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(player.contactLink);
+                    setContactCopied(true);
+                    window.setTimeout(() => setContactCopied(false), 1500);
+                  }}
+                  type="button"
+                >
+                  <span className="break-all text-left">{player.contactLink}</span>
+                  <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
+                    {contactCopied ? "Copied" : "Copy"}
+                    <CopyIcon className="h-4 w-4" />
+                  </span>
+                </button>
+              </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="mt-auto grid grid-cols-2 gap-3 pt-2">
             <button
               className={cn(
                 "inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-border bg-orange-100 px-4 text-sm font-medium transition-colors hover:bg-orange-500 hover:text-white",
