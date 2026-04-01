@@ -3,10 +3,11 @@
 PoGo-Bonfire is a progressive web app for Pokemon GO players to find a safe way to reconnect with in-game friends using IGN-based discovery. The app is optimized for low cost, high read performance, and resilient writes under burst traffic.
 
 It uses a split architecture:
+
 - a client-heavy read path powered by public Google Sheets exports, IndexedDB caching, and a Web Worker for search/filter/sort work
 - a protected write path powered by a Next.js serverless API, Upstash Redis lazy batching, and Google Sheets bulk appends
 
-<img width="2098" height="2907" alt="image" src="https://github.com/user-attachments/assets/29b6fe42-b7f9-4956-b02c-6120ddad6444" />
+<img width="2098" height="2907" alt="image" src="https://github.com/user-attachments/assets/d284279c-d84a-4b0f-af55-4f129275ea58" />
 
 ## Current Architecture
 
@@ -96,11 +97,13 @@ It uses a split architecture:
 9. If a threshold is met, the API tries to acquire `sync_lock` with a 15 second TTL.
 10. If lock acquisition fails, another request is already flushing, so the API returns `200 OK`.
 11. If lock acquisition succeeds:
-   - the queue is atomically renamed to `pogo_queue_processing`
-   - the batch is read
-   - rows are bulk appended to Google Sheets
-   - on success, the processing queue is deleted and `last_sheet_sync` is updated
-   - on failure, items are pushed back to the front of the main queue in FIFO order
+
+- the queue is atomically renamed to `pogo_queue_processing`
+- the batch is read
+- rows are bulk appended to Google Sheets
+- on success, the processing queue is deleted and `last_sheet_sync` is updated
+- on failure, items are pushed back to the front of the main queue in FIFO order
+
 12. The lock is always released in a `finally` block.
 
 ## Contact Metadata Model
@@ -148,6 +151,7 @@ Created At
 ```
 
 Notes:
+
 - `Tags` stores numeric indexes as a comma-separated string, for example `0,2,3`
 - `Contact Method` stores the stable contact key, for example `reddit` or `discord`
 - `Contact Kind` stores either `link_contact` or `id_contact`
@@ -178,6 +182,7 @@ GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\
 ```
 
 What they do:
+
 - `NEXT_PUBLIC_SHEET_CSV_URL`
   - primary public directory CSV source used by the client
 - `NEXT_PUBLIC_REGISTRATION_META_CSV_URL`
