@@ -146,7 +146,7 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
 
 ### FAQ
 
-<img width="1328" height="5186" alt="Image" src="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7" />
+<img width="1328" alt="Image" src="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7" />
 
 ### Architecture
 
