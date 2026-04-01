@@ -19,6 +19,7 @@ interface SearchPageProps {
 
 export function SearchPage({ adminEmail }: SearchPageProps) {
   const bootstrapLoading = useBonfireStore((state) => state.bootstrapLoading);
+  const derivedLoading = useBonfireStore((state) => state.derivedLoading);
   const records = useBonfireStore((state) => state.records);
   const filters = useBonfireStore((state) => state.filters);
   const tagOptions = useBonfireStore((state) => state.tagOptions);
@@ -149,10 +150,12 @@ export function SearchPage({ adminEmail }: SearchPageProps) {
             )}
           </CardContent>
         </Card>
-        {bootstrapLoading ? (
+        {bootstrapLoading || derivedLoading ? (
           <Card className="border-border/80 bg-card/75">
             <CardContent className="p-8 text-sm text-muted-foreground">
-              Syncing trainer directory...
+              {bootstrapLoading
+                ? "Syncing trainer directory..."
+                : "Filtering trainers..."}
             </CardContent>
           </Card>
         ) : (

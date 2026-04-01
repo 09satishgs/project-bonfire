@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useBonfireBootstrap } from "@/hooks/use-bonfire-bootstrap";
+import { useDirectoryWorker } from "@/hooks/use-directory-worker";
 import { BottomNav } from "@/components/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { useBonfireStore } from "@/stores/bonfire-store";
@@ -13,6 +14,7 @@ interface AppChromeProps {
 
 export function AppChrome({ children, csvUrl }: AppChromeProps) {
   useBonfireBootstrap(csvUrl);
+  useDirectoryWorker();
 
   const bootstrapError = useBonfireStore((state) => state.bootstrapError);
 

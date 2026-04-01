@@ -2,14 +2,13 @@
 
 import { create } from "zustand";
 
-import { normalizeIgn } from "@/lib/utils";
-import { getTagLabel } from "@/lib/registration-metadata";
 import type { BonfireFilters, ContactPlatformOption, PlayerRecord, TagOption } from "@/lib/types";
 
 interface BonfireState {
   records: PlayerRecord[];
   filteredRecords: PlayerRecord[];
   missingQuery: string | null;
+  derivedLoading: boolean;
   watchlistIgns: string[];
   watchlistMatches: string[];
   lastFetchedAt: number | null;
@@ -20,6 +19,8 @@ interface BonfireState {
   filters: BonfireFilters;
   setRecords: (records: PlayerRecord[], lastFetchedAt: number | null) => void;
   setFilters: (partial: Partial<BonfireFilters>) => void;
+  setDerivedResults: (filteredRecords: PlayerRecord[], missingQuery: string | null) => void;
+  setDerivedLoading: (loading: boolean) => void;
   setWatchlistIgns: (igns: string[]) => void;
   addWatchlistIgn: (ign: string) => void;
   removeWatchlistIgn: (ign: string) => void;
@@ -27,49 +28,6 @@ interface BonfireState {
   dismissWatchlistMatch: (ign: string) => void;
   setBootstrapStatus: (loading: boolean, error: string | null) => void;
   setRegistrationMetadata: (contactPlatforms: ContactPlatformOption[], tagOptions: TagOption[]) => void;
-}
-
-function applyFilters(records: PlayerRecord[], filters: BonfireFilters, tagOptions: TagOption[]): PlayerRecord[] {
-  const normalizedQuery = normalizeIgn(filters.query);
-  const normalizedTag = filters.tag.trim().toLowerCase();
-  const selectedTags = filters.selectedTags.map((tag) => tag.toLowerCase());
-
-  return [...records].filter((record) => {
-    const resolvedTags = record.tags.map((tag) => getTagLabel(tag, tagOptions).toLowerCase());
-    const matchesQuery =
-      !normalizedQuery ||
-      normalizeIgn(record.ign).includes(normalizedQuery) ||
-      record.contactLink.toLowerCase().includes(normalizedQuery);
-
-    const matchesMethod =
-      filters.contactMethod === "all" || record.contactMethod === filters.contactMethod;
-
-    const matchesTag =
-      !normalizedTag ||
-      resolvedTags.some((tag) => tag.includes(normalizedTag));
-
-    const matchesSelectedTags =
-      selectedTags.length === 0 ||
-      selectedTags.every((selectedTag) => resolvedTags.includes(selectedTag));
-
-    return matchesQuery && matchesMethod && matchesTag && matchesSelectedTags;
-  }).sort((left, right) => {
-    switch (filters.sort) {
-      case "az":
-        return left.ign.localeCompare(right.ign);
-      case "za":
-        return right.ign.localeCompare(left.ign);
-      case "oldest":
-        return getCreatedAt(left) - getCreatedAt(right);
-      case "recent":
-      default:
-        return getCreatedAt(right) - getCreatedAt(left);
-    }
-  });
-}
-
-function getCreatedAt(record: PlayerRecord): number {
-  return record.createdAt ? new Date(record.createdAt).getTime() || 0 : 0;
 }
 
 const defaultFilters: BonfireFilters = {
@@ -84,6 +42,7 @@ export const useBonfireStore = create<BonfireState>((set, get) => ({
   records: [],
   filteredRecords: [],
   missingQuery: null,
+  derivedLoading: true,
   watchlistIgns: [],
   watchlistMatches: [],
   lastFetchedAt: null,
@@ -93,23 +52,15 @@ export const useBonfireStore = create<BonfireState>((set, get) => ({
   tagOptions: [],
   filters: defaultFilters,
   setRecords: (records, lastFetchedAt) => {
-    const filters = get().filters;
-    const filteredRecords = applyFilters(records, filters, get().tagOptions);
-    const normalizedQuery = normalizeIgn(filters.query);
-    const missingQuery =
-      normalizedQuery.length >= 3 && filteredRecords.length === 0 ? filters.query.trim() : null;
-
-    set({ records, filteredRecords, lastFetchedAt, missingQuery });
+    set({ records, lastFetchedAt, derivedLoading: true });
   },
   setFilters: (partial) => {
     const filters = { ...get().filters, ...partial };
-    const filteredRecords = applyFilters(get().records, filters, get().tagOptions);
-    const normalizedQuery = normalizeIgn(filters.query);
-    const missingQuery =
-      normalizedQuery.length >= 3 && filteredRecords.length === 0 ? filters.query.trim() : null;
-
-    set({ filters, filteredRecords, missingQuery });
+    set({ filters, derivedLoading: true });
   },
+  setDerivedResults: (filteredRecords, missingQuery) =>
+    set({ filteredRecords, missingQuery, derivedLoading: false }),
+  setDerivedLoading: (loading) => set({ derivedLoading: loading }),
   setWatchlistIgns: (igns) => set({ watchlistIgns: igns }),
   addWatchlistIgn: (ign) =>
     set((state) => ({
@@ -129,6 +80,6 @@ export const useBonfireStore = create<BonfireState>((set, get) => ({
     set((state) => ({
       contactPlatforms,
       tagOptions,
-      filteredRecords: applyFilters(state.records, state.filters, tagOptions),
+      derivedLoading: true,
     })),
 }));
