@@ -1,123 +1,326 @@
 # PoGo-Bonfire
 
-PoGo-Bonfire is a progressive web app for Pokemon GO players to find a safe way to reconnect with in-game friends using IGN-based discovery. The app is optimized for low cost, high read performance, and resilient writes under burst traffic.
+> [!IMPORTANT]
+> PoGo-Bonfire is a progressive web app for Pokemon GO players to find and reconnect with in-game friends using IGN-based discovery, while keeping infrastructure cost near zero and protecting Google Sheets from burst traffic.
 
-It uses a split architecture:
+<p align="center">
+  <strong>Offline-friendly directory</strong> &bull;
+  <strong>Web Worker powered search</strong> &bull;
+  <strong>Redis-backed lazy batching</strong> &bull;
+  <strong>Google Sheets as a zero-cost backend</strong>
+</p>
 
-- a client-heavy read path powered by public Google Sheets exports, IndexedDB caching, and a Web Worker for search/filter/sort work
-- a protected write path powered by a Next.js serverless API, Upstash Redis lazy batching, and Google Sheets bulk appends
+<p align="center">
+  <img width="2137" height="1128" alt="PoGo Bonfire Logo" src="https://github.com/user-attachments/assets/3ba5a4b4-11c0-4056-ab2e-4858db4b065d" />
+</p>
 
-<img width="2098" height="2907" alt="image" src="https://github.com/user-attachments/assets/d284279c-d84a-4b0f-af55-4f129275ea58" />
+---
 
-## Current Architecture
+## Table of Contents
 
-### Read path
+- [Why This Project Exists](#why-this-project-exists)
+- [Who This README Is For](#who-this-readme-is-for)
+- [Product Snapshot](#product-snapshot)
+- [Screenshots](#screenshots)
+- [Feature Overview](#feature-overview)
+- [How The System Works](#how-the-system-works)
+- [Architecture Summary](#architecture-summary)
+- [Data Models](#data-models)
+- [Environment Variables](#environment-variables)
+- [Local Development](#local-development)
+- [Deployment Notes](#deployment-notes)
+- [Repository Automation](#repository-automation)
+- [Moderation Flow](#moderation-flow)
+- [Tech Stack](#tech-stack)
 
-- The player directory is sourced from a public Google Sheet.
-- The app tries the live Google CSV first with a 2 second circuit breaker timeout.
-- If Google is slow or unavailable, the app falls back to a jsDelivr CDN CSV snapshot stored in the repository.
-- Parsed records are cached in IndexedDB for 12 hours.
-- Registration metadata is loaded from a second public Google Sheet CSV and cached for 1 month.
-- Filtering, searching, and sorting are offloaded to a Web Worker so the main thread stays responsive.
+---
 
-### Write path
+## Why This Project Exists
 
-- Registrations are validated in `/api/register`.
-- The API uses Upstash Redis as a synchronous lazy-batching queue.
-- Duplicate prevention is handled with an atomic Redis `SADD` into `pogo_registered_igns`.
-- New registrations are added to `pogo_registration_queue`.
-- When queue size or time thresholds are met, the request that acquires the lock flushes the queue to Google Sheets in bulk.
-- Queue handoff uses Redis `RENAME` so new registrations can continue writing safely while a batch is being processed.
-- If Google Sheets fails, the batch is pushed back to the queue so data is not lost.
+Pokemon GO players often know each other only by in-game name. Most of the friends they make come from random people who share their code on Reddit groups. Once a friend is added, there is usually no reliable way to reconnect outside the game for coordinating gifts, remote trades, friendship grinding, or weekly challenges.
 
-## Main Features
+PoGo-Bonfire solves that gap with a fast and free public directory:
 
-- Floating bottom navigation with `Home`, `Search`, `Wishlist`, `FAQ`, and theme toggle
-- Light and dark theme support with persisted theme selection
-- Offline-friendly client caching with IndexedDB
-- Web Worker powered search, filtering, and sorting
-- Infinite scrolling results on `/search`
-- Multi-select tag filtering
-- Persisted search sort preference
-- Device-local self-registration state that replaces the form with a `(YOU)` player card after successful registration
-- Wishlist management with local persistence and match detection on fresh syncs
-- Metadata-driven contact methods and tags from an admin sheet
-- Player cards with friend-code copy action, contact rendering by contact kind, and structured Correct/Report dialogs
-- CDN fallback snapshot sync via GitHub Actions
+- players can register a public contact identity tied to their IGN
+- other players can search instantly without creating accounts
+- the app remains fast even with a large directory
+- the write path is intentionally designed to survive burst traffic and Google Sheets API limits
 
-## App Routes
+---
 
-- `/`
-  - shows total trainer count
-  - surfaces newly added trainers
-  - contains the registration flow or the saved `(YOU)` card
-- `/search`
-  - IGN/text search
-  - contact-method filtering
-  - multi-tag filtering
-  - sorting: `A to Z`, `Z to A`, `Recent first`, `Oldest first`
-  - infinite scroll in pages of 20
-- `/wishlist`
-  - shows locally saved wishlist IGNs
-  - allows adding a new wishlist IGN directly
-  - shows matches found after directory syncs
-- `/faq`
-  - static help and usage guidance
+## Who This README Is For
 
-## Data Flow
+| Audience             | Start Here                                      | Why                                                             |
+| -------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| End users            | [Product Snapshot](#product-snapshot)           | See what the app does and how the experience works              |
+| Reviewers / auditors | [How The System Works](#how-the-system-works)   | Understand data flow, reliability strategy, and scaling choices |
+| Contributors         | [Local Development](#local-development)         | Set up the project and work on it locally                       |
+| Maintainers          | [Environment Variables](#environment-variables) | Configure Sheets, Redis, and metadata sources correctly         |
 
-### Directory sync flow
+---
 
-1. App boot reads cached directory, metadata, wishlist, self-registration, and sort preference from IndexedDB.
-2. Metadata is reused if it is younger than 1 month; otherwise it is fetched again from the admin metadata sheet.
-3. Directory data is reused if it is non-empty and younger than 12 hours.
-4. If the directory cache is stale or missing, the app fetches the live Google CSV with a 2 second timeout.
-5. If the primary fetch fails or times out, the app fetches the CDN fallback CSV.
-6. Parsed player records hydrate Zustand state.
-7. The raw dataset and current filters are sent to a Web Worker, which computes filtered and sorted results.
-8. Wishlist entries are cross-checked against the fresh directory and surfaced as local matches.
+## Product Snapshot
 
-### Registration flow
+### What users can do
 
-1. User submits:
+| Area       | What it offers                                                                                  |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Home       | View total trainer count, discover newly added players, and register your own public contact    |
+| Search     | Search by IGN, filter by tags and contact method, sort results, and browse with infinite scroll |
+| Wishlist   | Save missing IGNs locally and get notified when they appear in a fresh sync                     |
+| FAQ        | Learn how the app works and what the contact fields mean                                        |
+| Moderation | Submit structured correction or report drafts directly from each player card                    |
+
+### UX highlights
+
+- bottom-centered floating navigation
+- light and dark theme toggle
+- device-local `(YOU)` registration state
+- instant client-side search with worker-based filtering and sorting
+- copy-to-clipboard interactions for friend code and `id_contact` values
+- resilient offline-friendly caching using IndexedDB
+
+---
+
+## Screenshots
+
+### Home
+
+<table>
+  <tr>
+    <td align="center">
+      <img height="5024" alt="Home Unregistered" src="https://github.com/user-attachments/assets/b5ab3dbd-0d05-440c-b589-34ed621ce883" />
+      <br />
+      <sub>Home Unregistered</sub>
+    </td>
+    <td align="center">
+      <img height="5024" alt="Home Registered" src="https://github.com/user-attachments/assets/69f18640-c373-4927-9ee4-ec794afd871c" />
+      <br />
+      <sub>Home Registered</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img height="5506" alt="Home with Wishlist Notifications" src="https://github.com/user-attachments/assets/30559326-4175-4c5c-bd84-86d163fe01d5" />
+      <br />
+      <sub>Home with Wishlist Notifications</sub>
+    </td>
+    <td align="center">
+      <img height="5044" alt="Home Dark Theme" src="https://github.com/user-attachments/assets/a6ac8b7a-7b42-4db2-8513-b5b4d11cca3b" />
+      <br />
+      <sub>Home Dark Theme</sub>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img height="3148" alt="Home Light theme" src="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963" />
+  <br />
+  <sub>Home Light Theme</sub>
+</p>
+
+### Search
+
+<p align="center">
+  <img height="15530" alt="Search" src="https://github.com/user-attachments/assets/240b8780-40e8-4ccb-a235-018d1883992c" />
+  <br />
+  <sub>Search</sub>
+</p>
+
+### Wishlist
+
+<table>
+  <tr>
+    <td align="center">
+      <img height="2284" alt="Wishlist Empty" src="https://github.com/user-attachments/assets/cf6245d9-d049-4383-a3f8-8110715f46d5" />
+      <br />
+      <sub>Wishlist Empty</sub>
+    </td>
+    <td align="center">
+      <img height="3648" alt="Wishlist with 2 Matches" src="https://github.com/user-attachments/assets/bdabc266-8260-4125-83fd-42091eed51ba" />
+      <br />
+      <sub>Wishlist with 2 Matches</sub>
+    </td>
+  </tr>
+</table>
+
+### FAQ
+
+<img width="1328" height="5186" alt="Image" src="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7" />
+
+### Architecture
+
+![Image](https://github.com/user-attachments/assets/6963dd22-3840-4f6d-9e44-8a54d1c50504)
+
+---
+
+## Feature Overview
+
+### Core experience
+
+| Feature                 | Description                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| Offline-first directory | Cached directory and metadata make repeat visits fast and resilient                  |
+| Instant search          | No network calls during search; all matching happens locally                         |
+| Infinite scroll         | Search results render in chunks of 20 for smoother browsing                          |
+| Multi-tag filters       | Users can browse trainers by multiple selected tags                                  |
+| Persistent sort         | Search sort preference is restored from local storage and IndexedDB                  |
+| Self-registration state | After successful registration, the form is replaced by a `(YOU)` card on that device |
+| Wishlist matching       | Local wishlist is checked automatically whenever fresh directory data arrives        |
+
+### Contact model
+
+| Contact kind   | Storage format                           | UI behavior                                           |
+| -------------- | ---------------------------------------- | ----------------------------------------------------- |
+| `link_contact` | Fully materialized URL                   | Rendered as a standard anchor that opens in a new tab |
+| `id_contact`   | Username / handle / raw contact identity | Rendered as a copy button                             |
+
+### Operational resilience
+
+| Protection                    | Why it exists                                           |
+| ----------------------------- | ------------------------------------------------------- |
+| 2 second read circuit breaker | Prevents slow Google Sheets reads from blocking the app |
+| jsDelivr CSV fallback         | Keeps reads alive if Google is slow or rate-limited     |
+| Redis duplicate set           | Prevents duplicate registrations in O(1) time           |
+| Lazy batching queue           | Shields Google Sheets from burst write traffic          |
+| Sync mutex lock               | Prevents concurrent flushes from colliding              |
+| Atomic queue handoff          | Avoids data loss while a batch is being written         |
+
+---
+
+## How The System Works
+
+## 1. Read path
+
+The directory read path is optimized for fast client experience and minimal backend cost.
+
+### Flow
+
+1. The app boots and checks IndexedDB for:
+   - directory cache
+   - metadata cache
+   - wishlist
+   - self-registration
+   - persisted sort preference
+2. Registration metadata is reused for up to 1 month.
+3. Directory data is reused for up to 12 hours if the cache is non-empty.
+4. If the directory needs refreshing:
+   - the app fetches the live Google CSV
+   - an `AbortController` cancels the request after 2000ms
+   - on timeout or failure, the app falls back to the jsDelivr CSV snapshot
+5. The CSV is parsed into the app's standard player-record shape.
+6. Raw records are stored in Zustand and IndexedDB.
+7. The dataset and active filters are sent to a Web Worker for:
+   - text search
+   - tag filtering
+   - contact-method filtering
+   - sorting
+8. The UI renders the current result slice with infinite scrolling.
+
+### Why this matters
+
+- fast repeat loads
+- low bandwidth cost
+- resilient fallback under viral traffic
+- smoother UI because heavy list computations are off the main thread
+
+---
+
+## 2. Write path
+
+The registration write path is synchronous, queue-backed, and designed to reduce direct pressure on Google Sheets.
+
+### Flow
+
+1. The user submits:
    - `IGN`
    - optional `Friend Code`
    - `Contact ID`
-   - manually selected `Contact Method`
+   - selected `Contact Method`
    - 0 to 3 tag indexes
-2. The contact value is materialized from metadata using the configured pattern.
-3. The API validates the payload and normalizes the IGN.
-4. The API attempts `SADD pogo_registered_igns normalizedIgn`.
-5. If Redis returns `0`, the IGN is already registered and the API returns `409 Conflict`.
-6. If Redis returns `1`, the record is pushed into `pogo_registration_queue`.
-7. The API checks:
+2. The API validates the payload using metadata-driven rules.
+3. The API normalizes the IGN.
+4. The API performs an atomic duplicate gate:
+   - `SADD pogo_registered_igns normalizedIgn`
+   - if Redis returns `0`, the request is rejected with `409 Conflict`
+5. If the IGN is new, the record is pushed into `pogo_registration_queue`.
+6. The API checks two flush thresholds:
    - queue length `> 50`
    - or time since `last_sheet_sync` `> 5 minutes`
-8. If neither threshold is met, the API returns `200 OK` immediately.
-9. If a threshold is met, the API tries to acquire `sync_lock` with a 15 second TTL.
-10. If lock acquisition fails, another request is already flushing, so the API returns `200 OK`.
-11. If lock acquisition succeeds:
+7. If neither threshold is met, the user gets `200 OK` immediately.
+8. If a threshold is met, the API tries to acquire `sync_lock` with a 15 second TTL.
+9. If lock acquisition fails, another request is already flushing, so the user still gets `200 OK`.
+10. If lock acquisition succeeds:
+    - `pogo_registration_queue` is atomically renamed to `pogo_queue_processing`
+    - the batch is read from Redis
+    - rows are bulk appended to Google Sheets
+11. If the append succeeds:
+    - `pogo_queue_processing` is deleted
+    - `last_sheet_sync` is updated
+12. If the append fails:
+    - the batch is pushed back to the front of the main queue in FIFO order
+    - the user still gets `200 OK` because the registration is safe in Redis
+13. The lock is always released in a `finally` block.
 
-- the queue is atomically renamed to `pogo_queue_processing`
-- the batch is read
-- rows are bulk appended to Google Sheets
-- on success, the processing queue is deleted and `last_sheet_sync` is updated
-- on failure, items are pushed back to the front of the main queue in FIFO order
+> [!NOTE]
+> Google Sheets is treated as the durable public directory destination, while Redis protects the write path from rate-limit spikes and duplicate race conditions.
 
-12. The lock is always released in a `finally` block.
+---
 
-## Contact Metadata Model
+## Architecture Summary
 
-Registration metadata comes from the public metadata sheet. It supports two contact kinds:
+| Layer              | Responsibility                                                     | Technology                |
+| ------------------ | ------------------------------------------------------------------ | ------------------------- |
+| UI shell           | Routes, layout, theme toggle, forms, player cards                  | Next.js App Router, React |
+| Client state       | Raw records, derived results, filters, self-registration, wishlist | Zustand                   |
+| Local persistence  | Directory cache, metadata cache, wishlist, sort, self-registration | idb-keyval / IndexedDB    |
+| Data processing    | Filtering, sorting, search computation                             | Web Worker                |
+| Public read source | Primary live directory source                                      | Public Google Sheet CSV   |
+| Read fallback      | CDN snapshot of the directory                                      | jsDelivr + GitHub Actions |
+| Metadata source    | Admin-managed contact and tag config                               | Public Google Sheet CSV   |
+| Write gateway      | Validation, queueing, locking, Sheets flush                        | Next.js serverless route  |
+| Burst protection   | Duplicate set, queue, lock, sync timestamps                        | Upstash Redis             |
+| Public data store  | Final persisted directory                                          | Google Sheets             |
 
-- `link_contact`
-  - stored value becomes a fully materialized URL
-  - rendered on the player card as a normal anchor opening in a new tab
-- `id_contact`
-  - stored value becomes a username or handle
-  - rendered on the player card as a copy button
+### Architectural principles
 
-Example metadata rows:
+- keep the read path cheap
+- keep search local
+- keep the write path safe under bursts
+- avoid traditional auth for the current phase
+- preserve data even when Google Sheets is slow or flaky
+
+---
+
+## Data Models
+
+### Main directory sheet
+
+The public directory CSV should expose these columns:
+
+| Column           | Purpose                                          |
+| ---------------- | ------------------------------------------------ |
+| `IGN`            | Primary user identity in Pokemon GO              |
+| `Friend Code`    | Optional 12-digit friend code                    |
+| `Contact Link`   | Final materialized contact value                 |
+| `Contact Method` | Stable contact key such as `reddit` or `discord` |
+| `Contact Kind`   | `link_contact` or `id_contact`                   |
+| `Tags`           | Comma-separated numeric indexes like `0,2,3`     |
+| `Created At`     | ISO timestamp                                    |
+
+### Metadata sheet
+
+The admin metadata CSV should expose:
+
+| Column    | Purpose                                   |
+| --------- | ----------------------------------------- |
+| `kind`    | `link_contact`, `id_contact`, or `tag`    |
+| `key`     | Stable identifier such as `reddit`        |
+| `label`   | UI label such as `Reddit`                 |
+| `pattern` | Contact value template using `{USERNAME}` |
+| `index`   | Numeric index for tags                    |
+
+### Example metadata rows
 
 ```text
 kind,key,label,pattern,index
@@ -132,43 +335,32 @@ tag,,#WantForeverFriends,,2
 tag,,#DoWeeklyChallenges,,3
 ```
 
-The app replaces `{USERNAME}` with the submitted `Contact ID`.
+### Contact transformation rule
 
-## Google Sheets Schema
+| Input            | Metadata pattern                      | Stored `Contact Link`                     |
+| ---------------- | ------------------------------------- | ----------------------------------------- |
+| `SomeRedditUser` | `https://www.reddit.com/u/{USERNAME}` | `https://www.reddit.com/u/SomeRedditUser` |
+| `Trainer#1234`   | `{USERNAME}`                          | `Trainer#1234`                            |
+| `campfriend`     | `@{USERNAME}`                         | `@campfriend`                             |
 
-### Main directory sheet
-
-The main directory sheet should expose these columns:
-
-```text
-IGN
-Friend Code
-Contact Link
-Contact Method
-Contact Kind
-Tags
-Created At
-```
-
-Notes:
-
-- `Tags` stores numeric indexes as a comma-separated string, for example `0,2,3`
-- `Contact Method` stores the stable contact key, for example `reddit` or `discord`
-- `Contact Kind` stores either `link_contact` or `id_contact`
-
-### Metadata sheet
-
-The metadata sheet should expose these columns:
-
-```text
-kind,key,label,pattern,index
-```
-
-`contact` options are defined by `kind`, `key`, `label`, and `pattern`. Tags are defined by `kind=tag`, `label`, and `index`.
+---
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and fill in the values:
+Copy `.env.example` to `.env.local` and fill in the values below.
+
+| Variable                                | Required | Description                                                  |
+| --------------------------------------- | -------- | ------------------------------------------------------------ |
+| `NEXT_PUBLIC_SHEET_CSV_URL`             | Yes      | Public Google Sheet CSV used as the primary directory source |
+| `NEXT_PUBLIC_REGISTRATION_META_CSV_URL` | Yes      | Public metadata CSV for contact methods and tags             |
+| `NEXT_PUBLIC_ADMIN_EMAIL`               | Yes      | Recipient for Correct / Report drafts                        |
+| `UPSTASH_REDIS_REST_URL`                | Yes      | Upstash Redis REST endpoint                                  |
+| `UPSTASH_REDIS_REST_TOKEN`              | Yes      | Upstash Redis REST auth token                                |
+| `GOOGLE_SHEET_ID`                       | Yes      | Spreadsheet ID used for batched writes                       |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL`          | Yes      | Google service account identity                              |
+| `GOOGLE_PRIVATE_KEY`                    | Yes      | Google service account private key                           |
+
+### Example
 
 ```env
 NEXT_PUBLIC_SHEET_CSV_URL=https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=0
@@ -181,93 +373,150 @@ GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-What they do:
+> [!WARNING]
+> Never expose Redis credentials or the Google private key to the client. Only `NEXT_PUBLIC_*` values are safe for browser use.
 
-- `NEXT_PUBLIC_SHEET_CSV_URL`
-  - primary public directory CSV source used by the client
-- `NEXT_PUBLIC_REGISTRATION_META_CSV_URL`
-  - public admin-managed metadata CSV for contact methods and tags
-- `NEXT_PUBLIC_ADMIN_EMAIL`
-  - used for Correct/Report mail drafts
-- `UPSTASH_REDIS_REST_URL`
-  - Redis endpoint for duplicate prevention, queueing, sync lock, and timestamps
-- `UPSTASH_REDIS_REST_TOKEN`
-  - Redis auth token
-- `GOOGLE_SHEET_ID`
-  - target spreadsheet for batched writes
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
-  - service account identity used by the serverless function
-- `GOOGLE_PRIVATE_KEY`
-  - private credential used to authenticate with the Google Sheets API
+---
 
 ## Local Development
 
 ### Prerequisites
 
-- Node.js 18+
-- npm
-- a Google Sheet for the public directory
-- a Google Sheet for public registration metadata
-- a Google Cloud service account with write access to the main sheet
-- an Upstash Redis database
+| Requirement            | Notes                                                 |
+| ---------------------- | ----------------------------------------------------- |
+| Node.js 18+            | Recommended for local development                     |
+| npm                    | Package manager used in this repo                     |
+| Public directory sheet | Must expose a readable CSV                            |
+| Public metadata sheet  | Must expose a readable CSV                            |
+| Google service account | Needs write access to the main sheet                  |
+| Upstash Redis database | Required for the registration queue and duplicate set |
 
 ### Setup
 
-1. Install dependencies:
+1. Install dependencies
 
 ```bash
 npm install
 ```
 
-2. Create `.env.local` from `.env.example`
+2. Create your local environment file
 
-3. Run the app:
+```bash
+cp .env.example .env.local
+```
+
+3. Fill in the environment values
+
+4. Start the app
 
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000)
+5. Open [http://localhost:3000](http://localhost:3000)
 
-## CDN Fallback Sync
+### Helpful local checks
 
-The repository includes a GitHub Actions workflow at `.github/workflows/sync-directory.yml` that:
+| Check                                                    | Why                                                     |
+| -------------------------------------------------------- | ------------------------------------------------------- |
+| Verify the public sheet CSV URLs in the browser          | Confirms the client can read the directory and metadata |
+| Confirm the service account has access to the main sheet | Required for batch appends                              |
+| Confirm Upstash env vars are valid                       | Required for duplicate prevention and queueing          |
 
-- runs every 2 hours
-- can be triggered manually with `workflow_dispatch`
-- downloads the public directory CSV
-- stores it at `public/data/fallback-directory.csv`
-- commits changes back to `main`
+---
 
-This file is used as the jsDelivr fallback source when the primary Google Sheets read path is slow or unavailable.
+## Deployment Notes
+
+### Expected behavior in production
+
+| Concern                   | Current strategy                          |
+| ------------------------- | ----------------------------------------- |
+| Read spikes               | Circuit breaker + jsDelivr fallback       |
+| Write spikes              | Redis queue + lazy batching               |
+| Duplicate registrations   | Atomic `SADD` into `pogo_registered_igns` |
+| Concurrent flush attempts | `sync_lock` with TTL                      |
+| Mid-flush failure         | Requeue the batch onto the main queue     |
+
+### Operational assumptions
+
+- `pogo_registered_igns` is expected to be populated and maintained outside the request path
+- the public directory sheet is the canonical public dataset
+- Redis is the operational buffer that keeps writes fast and safe
+
+---
+
+## Repository Automation
+
+The repository includes `.github/workflows/sync-directory.yml`.
+
+### What it does
+
+| Trigger         | Behavior                                  |
+| --------------- | ----------------------------------------- |
+| Every 2 hours   | Downloads the latest public directory CSV |
+| Manual dispatch | Lets you test the sync from the GitHub UI |
+
+### Output
+
+| File                                 | Purpose                                                        |
+| ------------------------------------ | -------------------------------------------------------------- |
+| `public/data/fallback-directory.csv` | jsDelivr-served fallback snapshot used by the client read path |
+
+This snapshot powers the CDN fallback if Google Sheets becomes slow or temporarily unavailable.
+
+---
 
 ## Moderation Flow
 
-Player cards expose `Correct` and `Report` actions.
+Each player card exposes `Correct` and `Report`.
 
-- `Correct`
-  - for typos or human mistakes
-- `Report`
-  - for invalid, misleading, or unrelated data
+| Action    | When to use it                                                  |
+| --------- | --------------------------------------------------------------- |
+| `Correct` | A typo or honest mistake needs to be fixed                      |
+| `Report`  | The entry is invalid, misleading, or points somewhere unrelated |
 
-Both open a full-screen dialog that generates a structured email draft via `mailto:`. Browsers cannot reliably attach local files directly into Gmail or Outlook from the web app, so the draft reminds the user to manually attach any image or video evidence they selected.
+### How it works
+
+- the action opens a full-screen dialog
+- the user fills in a structured form
+- the app generates a polished email draft through `mailto:`
+- the draft reminds the user to manually attach image or video evidence
+
+> [!NOTE]
+> Browsers cannot reliably pass selected files as real attachments into Gmail or Outlook. The current flow intentionally drafts the message and asks the user to attach evidence manually.
+
+---
 
 ## Tech Stack
 
-- Next.js App Router
-- React
-- TypeScript
-- Tailwind CSS
-- Zustand
-- idb-keyval
-- Papa Parse
-- Web Worker
-- Upstash Redis
-- googleapis
-- GitHub Actions
+| Layer                    | Technology          |
+| ------------------------ | ------------------- |
+| Framework                | Next.js App Router  |
+| UI                       | React, Tailwind CSS |
+| Language                 | TypeScript          |
+| State                    | Zustand             |
+| Local storage            | idb-keyval          |
+| CSV parsing              | Papa Parse          |
+| Background compute       | Web Worker          |
+| Queue / duplicate guard  | Upstash Redis       |
+| External write API       | googleapis          |
+| Fallback sync automation | GitHub Actions      |
 
-## Notes
+---
 
-- The directory read path is optimized for fast client-side search and low infrastructure cost.
-- The write path is optimized for burst protection and Google Sheets API survivability.
-- Duplicate prevention is enforced server-side with Redis and does not rely on client-side state.
+## Project Positioning
+
+PoGo-Bonfire is a good example of a portfolio project that emphasizes:
+
+- pragmatic system design under cost constraints
+- client-heavy performance optimization
+- graceful degradation with multiple fallback layers
+- real-world race-condition prevention in a serverless environment
+- thoughtful UX for both casual users and maintainers
+
+If you are reviewing this project as an engineer, the most interesting parts are:
+
+- the split read/write architecture
+- Redis-backed duplicate prevention and batching
+- worker-offloaded search computation
+- metadata-driven contact modeling without redeploying the app

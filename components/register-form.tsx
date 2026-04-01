@@ -64,8 +64,8 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       <CardHeader>
         <CardTitle>Add Your Contact Beacon</CardTitle>
         <CardDescription>
-          Secure writes go through a serverless gateway and append only after
-          validation.
+          Securely updates to database. Please note it can take upto 12 hours to
+          reflect your registration in global directory.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -240,7 +240,8 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
               {isPending ? "Submitting..." : "Register"}
             </Button>
             <span className="text-sm text-muted-foreground">
-              IGN is required. Friend Code is optional but must be 12 digits if included.
+              IGN is required. Friend Code is optional but must be 12 digits if
+              included.
             </span>
           </div>
           {message ? (

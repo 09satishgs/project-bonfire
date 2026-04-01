@@ -107,8 +107,8 @@ export function HomePage({ adminEmail }: HomePageProps) {
           <CardHeader>
             <CardTitle>Newly Added Trainers</CardTitle>
             <CardDescription>
-              Fresh arrivals from the synced roster. Search remains a dedicated
-              tab.
+              Fresh arrivals from the synced roster. Click Search ↓ for full
+              list with filters and sort
             </CardDescription>
           </CardHeader>
           <CardContent>
