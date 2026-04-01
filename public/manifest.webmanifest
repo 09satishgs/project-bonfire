@@ -4,7 +4,7 @@
   "description": "A global Pokemon GO directory for finding contact paths for in-game friends.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fff9f1",
+  "background_color": "#090b10",
   "theme_color": "#f97316",
   "icons": []
 }

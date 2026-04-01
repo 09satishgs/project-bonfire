@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,16 +13,35 @@ const items = [
   { href: "/wishlist", label: "Wishlist", icon: HeartIcon },
   { href: "/faq", label: "FAQ", icon: HelpIcon },
 ];
+const THEME_STORAGE_KEY = "pogobonfire-theme";
+type ThemeMode = "dark" | "light";
 
 export function BottomNav() {
   const pathname = usePathname();
   const watchlistMatchCount = useBonfireStore(
     (state) => state.watchlistMatches.length,
   );
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const nextTheme: ThemeMode = storedTheme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = nextTheme;
+    setTheme(nextTheme);
+    setMounted(true);
+  }, []);
+
+  function toggleTheme() {
+    const nextTheme: ThemeMode = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = nextTheme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    setTheme(nextTheme);
+  }
 
   return (
     <nav className="fixed inset-x-0 bottom-5 z-50 flex justify-center px-4">
-      <div className="flex w-full max-w-md items-center justify-between rounded-full border border-white/70 bg-white/88 p-2 shadow-glow backdrop-blur-xl">
+      <div className="flex w-full max-w-2xl items-center justify-between rounded-full border border-border/80 bg-card/90 p-2 shadow-glow backdrop-blur-xl">
         {items.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
@@ -49,6 +69,23 @@ export function BottomNav() {
             </Link>
           );
         })}
+        <button
+          className={cn(
+            "relative flex min-w-[72px] flex-col items-center justify-center rounded-full px-4 py-2 text-xs font-medium transition-all",
+            mounted
+              ? "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              : "text-muted-foreground",
+          )}
+          onClick={toggleTheme}
+          type="button"
+        >
+          {theme === "dark" ? (
+            <SunIcon className="mb-1 h-5 w-5" />
+          ) : (
+            <MoonIcon className="mb-1 h-5 w-5" />
+          )}
+          {theme === "dark" ? "Light" : "Dark"}
+        </button>
       </div>
     </nav>
   );
@@ -103,6 +140,29 @@ function HelpIcon({ className }: { className?: string }) {
       />
       <circle cx="12" cy="17.5" r=".9" fill="currentColor" />
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function SunIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6M18.7 18.7l-1.6-1.6M6.9 6.9 5.3 5.3" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function MoonIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24">
+      <path
+        d="M20 14.2A7.8 7.8 0 1 1 9.8 4a6.4 6.4 0 0 0 10.2 10.2Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
     </svg>
   );
 }

@@ -46,7 +46,7 @@ export function ResultsGrid({ adminEmail }: ResultsGridProps) {
 
   if (filteredRecords.length === 0) {
     return (
-      <Card className="border-dashed border-border bg-white/60">
+      <Card className="border-dashed border-border bg-card/60">
         <CardContent className="p-8 text-center text-sm text-muted-foreground">
           No matching trainers yet. Try a broader filter or add this IGN to your watchlist.
         </CardContent>
@@ -64,7 +64,7 @@ export function ResultsGrid({ adminEmail }: ResultsGridProps) {
         ))}
       </div>
       {visibleCount < filteredRecords.length ? (
-        <Card className="border-white/70 bg-white/70">
+        <Card className="border-border/80 bg-card/70">
           <CardContent className="p-4 text-center text-sm text-muted-foreground">
             Showing {visibleCount} of {filteredRecords.length} trainers. Scroll near the bottom to load more.
           </CardContent>

@@ -73,7 +73,7 @@ export function FaqPage() {
 
       <section className="grid gap-4">
         {faqs.map((item) => (
-          <Card className="border-white/70 bg-white/82" key={item.question}>
+          <Card className="border-border/80 bg-card/85" key={item.question}>
             <CardHeader>
               <CardTitle>{item.question}</CardTitle>
             </CardHeader>

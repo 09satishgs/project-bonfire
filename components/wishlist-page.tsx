@@ -50,7 +50,7 @@ export function WishlistPage({ adminEmail }: WishlistPageProps) {
 
       <section className="grid gap-6 xl:grid-cols-[0.8fr,1.2fr]">
         <div className="space-y-6">
-          <Card className="border-white/70 bg-white/82">
+          <Card className="border-border/80 bg-card/85">
             <CardHeader>
               <CardTitle>Add A Wishlist IGN</CardTitle>
               <CardDescription>
@@ -94,7 +94,7 @@ export function WishlistPage({ adminEmail }: WishlistPageProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-white/70 bg-white/82">
+          <Card className="border-border/80 bg-card/85">
             <CardHeader>
               <CardTitle>Saved Wishlist IGNs</CardTitle>
               <CardDescription>
@@ -138,7 +138,7 @@ export function WishlistPage({ adminEmail }: WishlistPageProps) {
           </Card>
         </div>
 
-        <Card className="border-white/70 bg-white/82">
+        <Card className="border-border/80 bg-card/85">
           <CardHeader>
             <CardTitle>Wishlist Matches</CardTitle>
             <CardDescription>

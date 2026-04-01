@@ -78,13 +78,13 @@ export function HomePage({ adminEmail }: HomePageProps) {
       />
       <WatchlistAlerts />
       {!registrationLoaded ? (
-        <Card className="border-white/70 bg-white/85 backdrop-blur">
+        <Card className="border-border/80 bg-card/85 backdrop-blur">
           <CardContent className="p-6 text-sm text-muted-foreground">
             Checking for your saved registration...
           </CardContent>
         </Card>
       ) : myRegistration ? (
-        <Card className="border-white/70 bg-white/85 backdrop-blur">
+        <Card className="border-border/80 bg-card/85 backdrop-blur">
           <CardHeader>
             <CardTitle>You have successfully registered your IGN.</CardTitle>
             <CardDescription>
@@ -103,7 +103,7 @@ export function HomePage({ adminEmail }: HomePageProps) {
         <RegisterForm onRegistered={setMyRegistration} />
       )}
       <section>
-        <Card className="border-white/70 bg-white/82">
+        <Card className="border-border/80 bg-card/85">
           <CardHeader>
             <CardTitle>Newly Added Trainers</CardTitle>
             <CardDescription>
