@@ -146,11 +146,11 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
 
 ### FAQ
 
-<img width="1328" alt="Image" src="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7" />
+<img width="1328" alt="FAQs" src="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7" />
 
 ### Architecture
 
-![Image](https://github.com/user-attachments/assets/6963dd22-3840-4f6d-9e44-8a54d1c50504)
+<img width="1328" alt="ArchitectureV3" src="[https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7](https://github.com/user-attachments/assets/6963dd22-3840-4f6d-9e44-8a54d1c50504)" />
 
 ---
 
