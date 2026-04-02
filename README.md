@@ -86,71 +86,116 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
 
 ### Home
 
-<table>
-  <tr>
-    <td align="center">
-      <img height="5024" alt="Home Unregistered" src="https://github.com/user-attachments/assets/b5ab3dbd-0d05-440c-b589-34ed621ce883" />
-      <br />
-      <sub>Home Unregistered</sub>
-    </td>
-    <td align="center">
-      <img height="5024" alt="Home Registered" src="https://github.com/user-attachments/assets/69f18640-c373-4927-9ee4-ec794afd871c" />
-      <br />
-      <sub>Home Registered</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img height="5506" alt="Home with Wishlist Notifications" src="https://github.com/user-attachments/assets/30559326-4175-4c5c-bd84-86d163fe01d5" />
-      <br />
-      <sub>Home with Wishlist Notifications</sub>
-    </td>
-    <td align="center">
-      <img height="5044" alt="Home Dark Theme" src="https://github.com/user-attachments/assets/a6ac8b7a-7b42-4db2-8513-b5b4d11cca3b" />
-      <br />
-      <sub>Home Dark Theme</sub>
-    </td>
-  </tr>
-</table>
-
-<p align="center">
-  <img height="3148" alt="Home Light theme" src="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963" />
+<details open>
+  <summary><strong>View Home Screens</strong></summary>
   <br />
-  <sub>Home Light Theme</sub>
-</p>
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/user-attachments/assets/b5ab3dbd-0d05-440c-b589-34ed621ce883">
+          <img width="260" alt="Home Unregistered" src="https://github.com/user-attachments/assets/b5ab3dbd-0d05-440c-b589-34ed621ce883" />
+        </a>
+        <br />
+        <sub>Home Unregistered</sub>
+      </td>
+      <td align="center">
+        <a href="https://github.com/user-attachments/assets/69f18640-c373-4927-9ee4-ec794afd871c">
+          <img width="260" alt="Home Registered" src="https://github.com/user-attachments/assets/69f18640-c373-4927-9ee4-ec794afd871c" />
+        </a>
+        <br />
+        <sub>Home Registered</sub>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/user-attachments/assets/30559326-4175-4c5c-bd84-86d163fe01d5">
+          <img width="260" alt="Home with Wishlist Notifications" src="https://github.com/user-attachments/assets/30559326-4175-4c5c-bd84-86d163fe01d5" />
+        </a>
+        <br />
+        <sub>Home with Wishlist Notifications</sub>
+      </td>
+      <td align="center">
+        <a href="https://github.com/user-attachments/assets/a6ac8b7a-7b42-4db2-8513-b5b4d11cca3b">
+          <img width="260" alt="Home Dark Theme" src="https://github.com/user-attachments/assets/a6ac8b7a-7b42-4db2-8513-b5b4d11cca3b" />
+        </a>
+        <br />
+        <sub>Home Dark Theme</sub>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" colspan="2">
+        <a href="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963">
+          <img width="320" alt="Home Light theme" src="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963" />
+        </a>
+        <br />
+        <sub>Home Light Theme</sub>
+      </td>
+    </tr>
+  </table>
+</details>
 
 ### Search
 
-<p align="center">
-  <img height="15530" alt="Search" src="https://github.com/user-attachments/assets/240b8780-40e8-4ccb-a235-018d1883992c" />
+<details open>
+  <summary><strong>View Search Screen</strong></summary>
   <br />
-  <sub>Search</sub>
-</p>
+  <p align="center">
+    <a href="https://github.com/user-attachments/assets/240b8780-40e8-4ccb-a235-018d1883992c">
+      <img width="340" alt="Search" src="https://github.com/user-attachments/assets/240b8780-40e8-4ccb-a235-018d1883992c" />
+    </a>
+    <br />
+    <sub>Search</sub>
+  </p>
+</details>
 
 ### Wishlist
 
-<table>
-  <tr>
-    <td align="center">
-      <img height="2284" alt="Wishlist Empty" src="https://github.com/user-attachments/assets/cf6245d9-d049-4383-a3f8-8110715f46d5" />
-      <br />
-      <sub>Wishlist Empty</sub>
-    </td>
-    <td align="center">
-      <img height="3648" alt="Wishlist with 2 Matches" src="https://github.com/user-attachments/assets/bdabc266-8260-4125-83fd-42091eed51ba" />
-      <br />
-      <sub>Wishlist with 2 Matches</sub>
-    </td>
-  </tr>
-</table>
+<details open>
+  <summary><strong>View Wishlist Screens</strong></summary>
+  <br />
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/user-attachments/assets/cf6245d9-d049-4383-a3f8-8110715f46d5">
+          <img width="260" alt="Wishlist Empty" src="https://github.com/user-attachments/assets/cf6245d9-d049-4383-a3f8-8110715f46d5" />
+        </a>
+        <br />
+        <sub>Wishlist Empty</sub>
+      </td>
+      <td align="center">
+        <a href="https://github.com/user-attachments/assets/bdabc266-8260-4125-83fd-42091eed51ba">
+          <img width="260" alt="Wishlist with 2 Matches" src="https://github.com/user-attachments/assets/bdabc266-8260-4125-83fd-42091eed51ba" />
+        </a>
+        <br />
+        <sub>Wishlist with 2 Matches</sub>
+      </td>
+    </tr>
+  </table>
+</details>
 
 ### FAQ
 
-<img width="1328" alt="FAQs" src="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7" />
+<details open>
+  <summary><strong>View FAQ Screen</strong></summary>
+  <br />
+  <p align="center">
+    <a href="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7">
+      <img width="640" alt="FAQs" src="https://github.com/user-attachments/assets/73419362-7c71-4e16-80c0-b42f163527c7" />
+    </a>
+  </p>
+</details>
 
 ### Architecture
 
-<img width="1328" alt="ArchitectureV3" src="https://github.com/user-attachments/assets/6963dd22-3840-4f6d-9e44-8a54d1c50504" />
+<details open>
+  <summary><strong>View Architecture Diagram</strong></summary>
+  <br />
+  <p align="center">
+    <a href="https://github.com/user-attachments/assets/6963dd22-3840-4f6d-9e44-8a54d1c50504">
+      <img width="640" alt="ArchitectureV3" src="https://github.com/user-attachments/assets/6963dd22-3840-4f6d-9e44-8a54d1c50504" />
+    </a>
+  </p>
+</details>
 
 ---
 
