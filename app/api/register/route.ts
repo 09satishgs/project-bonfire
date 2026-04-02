@@ -24,6 +24,7 @@ const SYNC_LOCK_KEY = "sync_lock";
 const SYNC_LOCK_TTL_SECONDS = 15;
 const QUEUE_FLUSH_THRESHOLD = 50;
 const TIME_FLUSH_THRESHOLD_MS = 5 * 60 * 1000;
+const GOOGLE_SHEETS_APPEND_TIMEOUT_MS = 8_000;
 
 const redis = Redis.fromEnv();
 type NonEmptyStringTuple = [string, ...string[]];
@@ -61,6 +62,45 @@ function getSheetId(): string {
   }
 
   return sheetId;
+}
+
+async function appendRowsToGoogleSheets(rows: string[][]): Promise<void> {
+  const sheets = getSheetsClient();
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => {
+    controller.abort(
+      new Error(
+        `Google Sheets append timed out after ${GOOGLE_SHEETS_APPEND_TIMEOUT_MS}ms.`,
+      ),
+    );
+  }, GOOGLE_SHEETS_APPEND_TIMEOUT_MS);
+
+  try {
+    await (sheets.spreadsheets.values.append as (...args: any[]) => Promise<unknown>)(
+      {
+        spreadsheetId: getSheetId(),
+        range: "A:G",
+        valueInputOption: "RAW",
+        requestBody: {
+          values: rows,
+        },
+      },
+      {
+        signal: controller.signal,
+      },
+    );
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(
+        `Google Sheets append timed out after ${GOOGLE_SHEETS_APPEND_TIMEOUT_MS}ms.`,
+        { cause: error },
+      );
+    }
+
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
 }
 
 function buildSheetRow(record: PlayerRecord): string[] {
@@ -174,15 +214,7 @@ async function flushQueueToGoogleSheets(): Promise<boolean> {
     const uniqueRows = uniqueRecords.map(buildSheetRow);
 
     if (uniqueRows.length > 0) {
-      const sheets = getSheetsClient();
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: getSheetId(),
-        range: "A:G",
-        valueInputOption: "RAW",
-        requestBody: {
-          values: uniqueRows,
-        },
-      });
+      await appendRowsToGoogleSheets(uniqueRows);
     }
 
     await Promise.all([
