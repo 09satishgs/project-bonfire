@@ -25,6 +25,7 @@
 - [Feature Overview](#feature-overview)
 - [How The System Works](#how-the-system-works)
 - [Architecture Summary](#architecture-summary)
+- [Design Decisions & System Trade-offs](#design-decisions--system-trade-offs)
 - [Data Models](#data-models)
 - [Environment Variables](#environment-variables)
 - [Local Development](#local-development)
@@ -334,6 +335,146 @@ The registration write path is synchronous, queue-backed, and designed to reduce
 - keep the write path safe under bursts
 - avoid traditional auth for the current phase
 - preserve data even when Google Sheets is slow or flaky
+
+---
+
+## Design Decisions & System Trade-offs
+
+This project was built under a strict set of constraints:
+
+- near-zero infrastructure cost
+- near-zero user friction
+- high operational resilience
+
+That led to several intentionally unorthodox decisions. In many places, product adoption and mobile practicality were prioritized over conventional backend architecture.
+
+### 1. Why Google Sheets as a database?
+
+The obvious alternative would have been a free-tier relational database such as PostgreSQL. That would improve transactional behavior, but it would also pull the product toward a more traditional auth-first architecture much earlier.
+
+#### Why Sheets was chosen
+
+| Product constraint      | Why Sheets helps                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| Low-friction onboarding | The app can avoid full account creation and reduce psychological drop-off for a casual gaming audience  |
+| Privacy posture         | The project can honestly say it does not collect traditional user-account identity or force OAuth login |
+| Volunteer moderation    | Google Sheets doubles as a familiar moderation dashboard with effectively zero training                 |
+| Admin velocity          | Volunteers can review, edit, and moderate entries without a custom admin panel or RBAC system           |
+| Cost ceiling            | Public-sheet reads and lightweight serverless writes keep the architecture inexpensive                  |
+
+#### Trade-off accepted
+
+- weaker concurrency guarantees than a real database
+- operational dependence on third-party spreadsheet behavior
+- eventual consistency instead of strong transactional semantics
+
+> [!NOTE]
+> This is a product-first decision, not a claim that Google Sheets is a universally better database.
+
+### 2. Defeating rate limits with a write buffer
+
+Google Sheets writes are fragile under burst traffic. Direct write-through would expose the app to `429 Too Many Requests` failures, especially during community spikes.
+
+#### Current approach
+
+| Mechanism           | Purpose                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| Redis duplicate set | Blocks duplicate IGN registrations in O(1)                                         |
+| Redis queue         | Absorbs incoming registrations quickly                                             |
+| Lazy batching       | Flushes to Sheets only when thresholds are met                                     |
+| Mutex lock          | Prevents multiple serverless instances from flushing the same batch simultaneously |
+| Requeue on failure  | Prioritizes data retention over immediate consistency                              |
+
+#### Why this trade-off is worth it
+
+- most users get a fast success response without waiting for Google Sheets
+- Sheets receives fewer, larger writes instead of many tiny writes
+- the system degrades more gracefully during traffic bursts
+
+#### Trade-off accepted
+
+- eventual persistence to Sheets instead of immediate persistence
+- added Redis complexity
+- more operational state to reason about during failures
+
+### 3. Edge-cached resilience on the read path
+
+The read path should never feel like a backend bottleneck. That means reading live data when possible, but failing over aggressively when the live source becomes slow.
+
+#### Current approach
+
+| Mechanism                  | Purpose                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| 12-hour IndexedDB cache    | Makes repeat visits fast and minimizes repeated network work                    |
+| 1-month metadata cache     | Avoids frequent config fetches for mostly stable tag/contact metadata           |
+| 2-second circuit breaker   | Prevents the UI from hanging on slow Google responses                           |
+| jsDelivr fallback snapshot | Keeps the directory usable when Google is slow or rate-limited                  |
+| Web Worker search pipeline | Moves filtering and sorting off the main thread                                 |
+| Local-first search         | Makes serving 10 users and 100,000 users roughly the same cost on the read path |
+
+#### Trade-off accepted
+
+- data is eventually consistent rather than always perfectly fresh
+- clients do more work in exchange for lower infra spend
+- large datasets shift more responsibility to user devices
+
+### 4. Hardware sympathy and the 100k freeze strategy
+
+The long-term scaling limit is not just Google Sheets. It is also the user’s device.
+
+#### The practical bottleneck
+
+Even if Google Sheets can continue storing more rows, shipping and processing very large payloads on mobile has real costs:
+
+- battery drain
+- thermal throttling
+- slower worker computation
+- longer hydration and cache writes
+
+#### Strategic position
+
+| Principle         | Decision                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| YAGNI             | Do not prematurely build a highly scalable dedicated backend before clear product-market fit |
+| Hardware sympathy | Accept a practical V1 ceiling instead of pretending infinite client-side scale               |
+| Migration trigger | Treat very large adoption as proof that a more serious backend is justified                  |
+
+If the directory approaches the current architectural comfort zone, the intended response is to freeze registrations temporarily, communicate openly with users, and then migrate to a more scalable backend when the effort becomes justified.
+
+Possible future direction:
+
+- a dedicated Go or Rust backend
+- a stronger queueing and storage system
+- potentially self-hosting on personal hardware or a dedicated low-cost instance
+
+### Security and abuse posture
+
+Because the public registration endpoint is intentionally unauthenticated, abuse prevention has to be practical rather than identity-based.
+
+| Safeguard                      | Purpose                                             |
+| ------------------------------ | --------------------------------------------------- |
+| IP rate limiting               | Restricts write attempts and reduces bot abuse      |
+| Honeypot field                 | Filters low-effort bot submissions                  |
+| Atomic duplicate gate in Redis | Prevents duplicate IGN claims under concurrency     |
+| Moderation workflow            | Allows bad data to be corrected or reported quickly |
+
+### What is implemented today vs planned
+
+| Decision / idea                                                 | Status              | Notes                                                                                                                      |
+| --------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Google Sheets as the public directory and moderation surface    | Implemented         | Core read/write architecture is already built around this                                                                  |
+| Redis-backed lazy batching for writes                           | Implemented         | Queue, lock, duplicate gate, and batch flush are in place                                                                  |
+| 2-second read circuit breaker with jsDelivr fallback            | Implemented         | Live Google fetch falls back to CDN snapshot                                                                               |
+| Web Worker based filtering and sorting                          | Implemented         | Search derivation is off the main thread                                                                                   |
+| IP rate limiting for registration writes                        | Implemented         | Current write path enforces request throttling                                                                             |
+| Local rate limiting to 2 full directory fetches per day         | Implemented         | The app currently uses TTL-based caching, not a per-day fetch cap                                                          |
+| 8-second AbortController around Google Sheets write flushes     | Implemented         | The write path currently relies on request flow and queue safety, but does not yet abort the Sheets append call explicitly |
+| Automatic asynchronous duplicate cleanup after timeout failures | Not implemented yet | Current strategy is retention-first requeueing, not a separate async reconciliation job                                    |
+| Hard operational freeze at ~100k users                          | Not implemented yet | This is a strategic future policy, not current enforced behavior                                                           |
+| Migration to a dedicated Go/Rust backend                        | Not implemented yet | This remains a future pivot if adoption proves it necessary                                                                |
+
+> [!WARNING]
+> A few ideas in this section describe deliberate future operating policy, not shipped code. The table above is the source of truth for what is implemented right now.
 
 ---
 
