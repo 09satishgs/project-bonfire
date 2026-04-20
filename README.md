@@ -14,6 +14,12 @@
   <img width="2137" height="1128" alt="PoGo Bonfire Logo" src="https://github.com/user-attachments/assets/3ba5a4b4-11c0-4056-ab2e-4858db4b065d" />
 </p>
 
+<p align="center">  
+  <strong>
+      Live URL at <a href="https://project-bonfire.vercel.app/" target="_blank">Project-Bonfire.vercel.app</a>
+  <strong>
+</p>
+
 ---
 
 ## Table of Contents
@@ -96,39 +102,42 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
         <a href="https://github.com/user-attachments/assets/b5ab3dbd-0d05-440c-b589-34ed621ce883">
           <img width="260" alt="Home Unregistered" src="https://github.com/user-attachments/assets/b5ab3dbd-0d05-440c-b589-34ed621ce883" />
         </a>
-        <br />
-        <sub>Home Unregistered</sub>
       </td>
       <td align="center">
         <a href="https://github.com/user-attachments/assets/69f18640-c373-4927-9ee4-ec794afd871c">
           <img width="260" alt="Home Registered" src="https://github.com/user-attachments/assets/69f18640-c373-4927-9ee4-ec794afd871c" />
         </a>
-        <br />
-        <sub>Home Registered</sub>
       </td>
-    </tr>
-    <tr>
       <td align="center">
         <a href="https://github.com/user-attachments/assets/30559326-4175-4c5c-bd84-86d163fe01d5">
           <img width="260" alt="Home with Wishlist Notifications" src="https://github.com/user-attachments/assets/30559326-4175-4c5c-bd84-86d163fe01d5" />
         </a>
-        <br />
-        <sub>Home with Wishlist Notifications</sub>
       </td>
       <td align="center">
         <a href="https://github.com/user-attachments/assets/a6ac8b7a-7b42-4db2-8513-b5b4d11cca3b">
           <img width="260" alt="Home Dark Theme" src="https://github.com/user-attachments/assets/a6ac8b7a-7b42-4db2-8513-b5b4d11cca3b" />
         </a>
-        <br />
-        <sub>Home Dark Theme</sub>
+      </td>
+      <td align="center" colspan="2">
+        <a href="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963">
+          <img width="260" alt="Home Light theme" src="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963" />
+        </a>
       </td>
     </tr>
     <tr>
+       <td align="center">
+        <sub>Home Unregistered</sub>
+      </td>
+      <td align="center">
+        <sub>Home Registered</sub>
+      </td>
+      <td align="center">
+        <sub>Home with Wishlist Notifications</sub>
+      </td>
+      <td align="center">
+        <sub>Home Dark Theme</sub>
+      </td>
       <td align="center" colspan="2">
-        <a href="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963">
-          <img width="320" alt="Home Light theme" src="https://github.com/user-attachments/assets/fadf8cdf-c752-4876-86b5-19e42969a963" />
-        </a>
-        <br />
         <sub>Home Light Theme</sub>
       </td>
     </tr>
@@ -137,12 +146,12 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
 
 ### Search
 
-<details open>
+<details >
   <summary><strong>View Search Screen</strong></summary>
   <br />
   <p align="center">
     <a href="https://github.com/user-attachments/assets/240b8780-40e8-4ccb-a235-018d1883992c">
-      <img width="340" alt="Search" src="https://github.com/user-attachments/assets/240b8780-40e8-4ccb-a235-018d1883992c" />
+      <img width="640" alt="Search" src="https://github.com/user-attachments/assets/240b8780-40e8-4ccb-a235-018d1883992c" />
     </a>
     <br />
     <sub>Search</sub>
@@ -151,21 +160,21 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
 
 ### Wishlist
 
-<details open>
+<details >
   <summary><strong>View Wishlist Screens</strong></summary>
   <br />
-  <table>
+  <table align="center">
     <tr>
       <td align="center">
         <a href="https://github.com/user-attachments/assets/cf6245d9-d049-4383-a3f8-8110715f46d5">
-          <img width="260" alt="Wishlist Empty" src="https://github.com/user-attachments/assets/cf6245d9-d049-4383-a3f8-8110715f46d5" />
+          <img height="600" alt="Wishlist Empty" src="https://github.com/user-attachments/assets/cf6245d9-d049-4383-a3f8-8110715f46d5" />
         </a>
         <br />
         <sub>Wishlist Empty</sub>
       </td>
       <td align="center">
         <a href="https://github.com/user-attachments/assets/bdabc266-8260-4125-83fd-42091eed51ba">
-          <img width="260" alt="Wishlist with 2 Matches" src="https://github.com/user-attachments/assets/bdabc266-8260-4125-83fd-42091eed51ba" />
+          <img height="600" alt="Wishlist with 2 Matches" src="https://github.com/user-attachments/assets/bdabc266-8260-4125-83fd-42091eed51ba" />
         </a>
         <br />
         <sub>Wishlist with 2 Matches</sub>
@@ -176,7 +185,7 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
 
 ### FAQ
 
-<details open>
+<details >
   <summary><strong>View FAQ Screen</strong></summary>
   <br />
   <p align="center">
@@ -188,7 +197,7 @@ PoGo-Bonfire solves that gap with a fast and free public directory:
 
 ### Architecture
 
-<details open>
+<details >
   <summary><strong>View Architecture Diagram</strong></summary>
   <br />
   <p align="center">
