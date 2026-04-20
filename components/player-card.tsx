@@ -108,10 +108,11 @@ export function PlayerCard({
     return `mailto:${adminEmail}?subject=${encodeURIComponent(`${subjectPrefix}:${player.ign}`)}&body=${encodeURIComponent(body)}`;
   }
   const formatFriendCode = (code:string):string=>{
-    if(code?.length!==12){
-      return "";
+    if(code && code.length===12){
+      const matches:string[] =  code.match(/.{1,4}/g)||[];
+      return matches.join(' ');
     }
-    return code.match(/.{1,4}/g).join(' ');
+    return "";
   }
   return (
     <>
