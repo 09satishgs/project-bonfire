@@ -107,7 +107,13 @@ export function PlayerCard({
 
     return `mailto:${adminEmail}?subject=${encodeURIComponent(`${subjectPrefix}:${player.ign}`)}&body=${encodeURIComponent(body)}`;
   }
-
+  const formatFriendCode = (code:string):string=>{
+    if(code && code.length===12){
+      const matches:string[] =  code.match(/.{1,4}/g)||[];
+      return matches.join(' ');
+    }
+    return "";
+  }
   return (
     <>
       <Card className="flex h-full flex-col border-border/80 bg-card/85 backdrop-blur">
@@ -153,7 +159,7 @@ export function PlayerCard({
                 }}
                 type="button"
               >
-                <span>{player.friendCode}</span>
+                <span>{formatFriendCode(player.friendCode)}</span>
                 <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   {copied ? "Copied" : "Copy"}
                   <CopyIcon className="h-4 w-4" />
