@@ -158,7 +158,7 @@ export function PlayerCard({
                 }}
                 type="button"
               >
-                <span>{player.friendCode}</span>
+                <span>{formatFriendCode(player.friendCode)}</span>
                 <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   {copied ? "Copied" : "Copy"}
                   <CopyIcon className="h-4 w-4" />
