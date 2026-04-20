@@ -107,7 +107,12 @@ export function PlayerCard({
 
     return `mailto:${adminEmail}?subject=${encodeURIComponent(`${subjectPrefix}:${player.ign}`)}&body=${encodeURIComponent(body)}`;
   }
-
+  const formatFriendCode = (code)=>{
+    if(code?.length!==12){
+      return "";
+    }
+    return code.match(/.{1,4}/g).join(' ');
+  }
   return (
     <>
       <Card className="flex h-full flex-col border-border/80 bg-card/85 backdrop-blur">
