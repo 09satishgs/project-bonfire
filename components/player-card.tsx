@@ -107,7 +107,7 @@ export function PlayerCard({
 
     return `mailto:${adminEmail}?subject=${encodeURIComponent(`${subjectPrefix}:${player.ign}`)}&body=${encodeURIComponent(body)}`;
   }
-  const formatFriendCode = (code)=>{
+  const formatFriendCode = (code:string):string=>{
     if(code?.length!==12){
       return "";
     }
