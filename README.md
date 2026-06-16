@@ -16,7 +16,7 @@
 
 <p align="center">  
   <strong>
-      Live URL at <a href="https://project-bonfire.vercel.app/" target="_blank">Project-Bonfire.vercel.app</a>
+      Live URL at <a href="https://projects.satishg.in/pogobonfire/" target="_blank">projects.satishg.in/pogobonfire</a>
   <strong>
 </p>
 
